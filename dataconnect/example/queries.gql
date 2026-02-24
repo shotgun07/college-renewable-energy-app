@@ -1,0 +1,31 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {
+    createdAt_expr: "request.time"
+    passwordHash: "examplePasswordHash"
+    phoneNumber: "123-456-7890"
+    role: "student"
+  })
+}
+
+query GetStudentsInDepartment($departmentId: UUID!) @auth(level: USER) {
+  students(where: {departmentId: {eq: $departmentId}}) {
+    id
+    fullName
+    nationalId
+  }
+}
+
+mutation UpdateStudentFullName($studentId: UUID!, $fullName: String!) @auth(level: USER) {
+  student_update(
+    key: {id: $studentId}
+    data: {fullName: $fullName, updatedAt_expr: "request.time"}
+  )
+}
+
+query ListDepartments @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  departments {
+    id
+    name
+    description
+  }
+}

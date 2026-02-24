@@ -1,0 +1,29 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "renewable-energy-college-app",
+                    "appId": "1:167535432638:android:93d7031d29dd5783939fef",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "renewable-energy-college-app",
+                    "configurations": {
+                        "android": "1:167535432638:android:93d7031d29dd5783939fef",
+                        "ios": "1:167535432638:ios:b0fcd9ace182d550939fef",
+                        "macos": "1:167535432638:ios:b0fcd9ace182d550939fef",
+                        "web": "1:167535432638:web:4b33b52950fd874b939fef",
+                        "windows": "1:167535432638:web:1ed5207f4c9a9bee939fef"
+                    }
+                }
+            }
+        }
+    },
+    "firestore": {
+        "rules": "firestore.rules",
+        "indexes": "firestore.indexes.json"
+    }
+}

@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "167535432638",
+    "project_id": "renewable-energy-college-app",
+    "storage_bucket": "renewable-energy-college-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167535432638:android:93d7031d29dd5783939fef",
+        "android_client_info": {
+          "package_name": "com.collegeRenewableEnergy.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "167535432638-mtsvst5rrtnqtimks3md8f82ucp72ijg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.collegeRenewableEnergy.app",
+            "certificate_hash": "c6f0c493dd90c04ca35fe1ff5511c437410994ca"
+          }
+        },
+        {
+          "client_id": "167535432638-kmc328nj4qb21qad9j530n1u51iaehpb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0b3WLAaWX4DMWdAQBuPkrJwZG89eU-zE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "167535432638-kmc328nj4qb21qad9j530n1u51iaehpb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "167535432638-0qnqmpeoo89i977dmsrie27e8cnm29r6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.collegeRenewableEnergy.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167535432638:android:c65b09ae6cea635c939fef",
+        "android_client_info": {
+          "package_name": "com.example.college_admin_dashboard"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "167535432638-qg4p8smlfob2om9sgd36nhqf91u34ua5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.college_admin_dashboard",
+            "certificate_hash": "c6f0c493dd90c04ca35fe1ff5511c437410994ca"
+          }
+        },
+        {
+          "client_id": "167535432638-kmc328nj4qb21qad9j530n1u51iaehpb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0b3WLAaWX4DMWdAQBuPkrJwZG89eU-zE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "167535432638-kmc328nj4qb21qad9j530n1u51iaehpb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "167535432638-0qnqmpeoo89i977dmsrie27e8cnm29r6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.collegeRenewableEnergy.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

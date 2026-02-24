@@ -1,0 +1,319 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getAuthUid() {
+      return request.auth.uid;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(getAuthUid())).data;
+    }
+
+    function isSameUser(userId) {
+      return isSignedIn() && getAuthUid() == userId;
+    }
+
+    function roleIs(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+
+    function deptIs(deptName) {
+      return isSignedIn() && getUserData().departmentName == deptName;
+    }
+
+    // NEW: Check if user is verified (either Firebase or custom)
+    function isVerified() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true ||
+        getUserData().customVerified == true
+      );
+    }
+
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    function existingData() {
+      return resource.data;
+    }
+
+    function isGlobalAdmin() {
+      return roleIs('admin');
+    }
+
+    function isDeptSupervisor(deptName) {
+      return roleIs('supervisor') && deptIs(deptName);
+    }
+
+    function validateString(field, min, max) {
+      return incomingData()[field] is string && 
+             incomingData()[field].size() >= min && 
+             incomingData()[field].size() <= max;
+    }
+
+    function validateInt(field, min, max) {
+      return incomingData()[field] is int && 
+             incomingData()[field] >= min && 
+             incomingData()[field] <= max;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (
+        isSameUser(userId) || 
+        isGlobalAdmin() || 
+        (roleIs('supervisor') && deptIs(existingData().departmentName)) ||
+        (roleIs('teacher') && deptIs(existingData().departmentName))
+      );
+      
+      allow list: if isGlobalAdmin() || roleIs('supervisor') || roleIs('teacher');
+
+      allow create: if isSignedIn() && 
+                    isSameUser(userId) && 
+                    incomingData().role == 'student' && 
+                    incomingData().uid == getAuthUid() &&
+                    validateString('fullName', 3, 50) &&
+                    validateString('departmentName', 2, 50);
+
+      allow update: if isSignedIn() && (
+        // Users can update their own data but NOT verification status
+        (isSameUser(userId) && 
+         incomingData().role == existingData().role && 
+         incomingData().uid == existingData().uid &&
+         // Prevent self-verification
+         incomingData().customVerified == existingData().customVerified &&
+         incomingData().verifiedBy == existingData().verifiedBy) || 
+        // Admins can update everything including verification
+        isGlobalAdmin()
+      );
+
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /lectures/{lectureId} {
+      allow get: if isSignedIn() && (
+        deptIs(existingData().departmentName) || 
+        isGlobalAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        deptIs(existingData().departmentName) || 
+        isGlobalAdmin()
+      );
+
+      allow create: if isSignedIn() && (
+        (roleIs('teacher') && deptIs(incomingData().departmentName)) ||
+        isDeptSupervisor(incomingData().departmentName) ||
+        isGlobalAdmin()
+      ) && 
+      validateString('title', 3, 100) && 
+      incomingData().fileUrl is string &&
+      incomingData().createdAt is timestamp;
+
+      allow update: if isSignedIn() && (
+        existingData().teacherUid == getAuthUid() || 
+        isDeptSupervisor(existingData().departmentName) ||
+        isGlobalAdmin()
+      ) && 
+      incomingData().teacherUid == existingData().teacherUid &&
+      incomingData().departmentName == existingData().departmentName;
+
+      allow delete: if isSignedIn() && (
+        existingData().teacherUid == getAuthUid() || 
+        isDeptSupervisor(existingData().departmentName) ||
+        isGlobalAdmin()
+      );
+    }
+
+    match /attendance/{attendanceId} {
+      allow get: if isSignedIn() && (
+        isSameUser(existingData().studentUid) ||
+        existingData().teacherUid == getAuthUid() ||
+        isDeptSupervisor(existingData().departmentName) ||
+        isGlobalAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        deptIs(existingData().departmentName) || 
+        isGlobalAdmin()
+      );
+
+      allow create: if isSignedIn() && (
+        (roleIs('teacher') && deptIs(incomingData().departmentName)) ||
+        isDeptSupervisor(incomingData().departmentName) ||
+        isGlobalAdmin()
+      ) &&
+      incomingData().status is bool &&
+      incomingData().date is timestamp;
+
+      allow update: if isSignedIn() && (
+        existingData().teacherUid == getAuthUid() || 
+        isDeptSupervisor(existingData().departmentName) ||
+        isGlobalAdmin()
+      );
+
+      allow delete: if isGlobalAdmin() || isDeptSupervisor(existingData().departmentName);
+    }
+
+    match /results/{resultId} {
+      allow get: if isSignedIn() && (
+        isSameUser(existingData().studentUid) ||
+        isDeptSupervisor(existingData().departmentName) ||
+        isGlobalAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        isDeptSupervisor(existingData().departmentName) || 
+        isGlobalAdmin() ||
+        (roleIs('student') && deptIs(existingData().departmentName))
+      );
+
+      allow create: if isSignedIn() && (
+        isDeptSupervisor(incomingData().departmentName) || 
+        isGlobalAdmin()
+      ) &&
+      validateInt('score', 0, 100) &&
+      validateString('subjectId', 3, 50);
+
+      allow update: if isSignedIn() && (
+        isGlobalAdmin() || 
+        isDeptSupervisor(existingData().departmentName)
+      );
+
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && (
+        getAuthUid() in existingData().participants || 
+        isGlobalAdmin()
+      );
+
+      allow list: if isSignedIn();
+
+      allow create: if isSignedIn() && 
+                    getAuthUid() in incomingData().participants &&
+                    incomingData().participants.size() == 2;
+
+      allow update: if isSignedIn() && 
+                    getAuthUid() in existingData().participants;
+
+      allow delete: if isGlobalAdmin();
+
+      match /messages/{messageId} {
+        allow get, list: if isSignedIn() && (
+          getAuthUid() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants ||
+          isGlobalAdmin()
+        );
+
+        allow create: if isSignedIn() && 
+                      getAuthUid() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants &&
+                      incomingData().senderId == getAuthUid() &&
+                      validateString('text', 1, 2000) &&
+                      incomingData().sentAt == request.time;
+        
+        allow update, delete: if isSignedIn() && 
+                             existingData().senderId == getAuthUid();
+      }
+    }
+
+    match /schedules/{scheduleId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isSignedIn() && (
+        isDeptSupervisor(incomingData().departmentName) || 
+        isGlobalAdmin()
+      );
+
+      allow update: if isSignedIn() && (
+        isDeptSupervisor(existingData().departmentName) || 
+        isGlobalAdmin()
+      );
+
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /announcements/{annId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isSignedIn() && (
+        isDeptSupervisor(incomingData().departmentName) || 
+        isGlobalAdmin()
+      ) &&
+      validateString('content', 5, 5000) &&
+      incomingData().priority in ['low', 'medium', 'high'];
+
+      allow update: if isSignedIn() && (
+        isGlobalAdmin() || 
+        (isDeptSupervisor(existingData().departmentName) && incomingData().authorUid == getAuthUid())
+      );
+
+      allow delete: if isGlobalAdmin() || isDeptSupervisor(existingData().departmentName);
+    }
+
+    match /departments/{deptId} {
+      allow read: if isSignedIn();
+      
+      allow create, update, delete: if isGlobalAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isGlobalAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /faculty_profiles/{profileId} {
+      allow get, list: if isSignedIn();
+      
+      allow create: if isGlobalAdmin();
+      
+      allow update: if isSignedIn() && (
+        isGlobalAdmin() || 
+        (roleIs('teacher') && isSameUser(profileId))
+      );
+      
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /system_settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isGlobalAdmin();
+    }
+
+    match /notifications/{notifId} {
+      allow get, list: if isSignedIn() && isSameUser(existingData().targetUid);
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && isSameUser(existingData().targetUid);
+      allow delete: if isSignedIn() && isSameUser(existingData().targetUid);
+    }
+
+    match /student_requests/{requestId} {
+      allow get: if isSignedIn() && (isSameUser(existingData().studentUid) || isDeptSupervisor(existingData().departmentName) || isGlobalAdmin());
+      allow list: if isSignedIn() && (isDeptSupervisor(getUserData().departmentName) || isGlobalAdmin());
+      allow create: if roleIs('student') && isSameUser(incomingData().studentUid);
+      allow update: if isSignedIn() && (isDeptSupervisor(existingData().departmentName) || isGlobalAdmin());
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /threads/{threadId} {
+      allow read: if isSignedIn() && (getAuthUid() in existingData().participants || isGlobalAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (getAuthUid() in existingData().participants || isGlobalAdmin());
+      
+      match /messages/{param} {
+         allow read, write: if isSignedIn() && (getAuthUid() in get(/databases/$(database)/documents/threads/$(threadId)).data.participants || isGlobalAdmin());
+      }
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if isGlobalAdmin();
+    }
+
+  }
+}

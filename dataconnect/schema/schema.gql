@@ -1,0 +1,33 @@
+type User @table {
+  phoneNumber: String!
+  passwordHash: String!
+  role: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  lastLogin: Timestamp
+}
+
+type Student @table {
+  user: User!
+  fullName: String!
+  nationalId: String!
+  department: Department!
+  semester: Semester!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Department @table {
+  name: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  description: String
+}
+
+type Semester @table {
+  name: String!
+  startDate: Date!
+  endDate: Date!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}

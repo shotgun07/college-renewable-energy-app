@@ -1,0 +1,105 @@
+name: app
+description: College Renewable Energy App
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase - keep current versions (already latest)
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  firebase_storage: ^13.0.6
+  firebase_messaging: ^16.1.1
+  
+  # Notifications - upgrade to latest
+  flutter_local_notifications: ^20.0.0
+  
+  # Google Sign-In
+  google_sign_in: ^7.2.0
+  
+  # File handling - upgrade to latest
+  file_picker: ^10.3.10
+  flutter_plugin_android_lifecycle: ^2.0.22
+  image_picker: ^1.2.1
+  
+  # Data handling
+  csv: ^6.0.0
+  
+  # State management (will migrate to Riverpod in Phase 2)
+  provider: ^6.1.2
+  
+  # Local storage
+  shared_preferences: ^2.3.3
+  
+  # Security - NEW: for production-grade token storage
+  flutter_secure_storage: ^10.0.0
+  
+  # Localization
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  
+  # UI components
+  photo_view: ^0.15.0
+  pinput: ^6.0.1
+  
+  # Utilities
+  url_launcher: ^6.3.2
+  connectivity_plus: ^7.0.0
+  local_auth: ^3.0.0
+  
+  # Performance - NEW: for optimized image loading
+  cached_network_image: 3.4.1
+  flutter_riverpod: ^3.1.0
+  riverpod_annotation: ^4.0.0
+  flutter_image_compress: ^2.4.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  timezone: ^0.10.1
+  record: ^6.2.0
+  audioplayers: ^6.5.1
+  encrypt: ^5.0.3
+  rsa_encrypt: ^2.0.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  google_generative_ai: ^0.4.7
+  uuid: ^4.5.3
+  pointycastle: ^3.9.1
+
+dev_dependencies:
+  flutter_native_splash: ^2.4.1
+  flutter_test:
+    sdk: flutter
+  
+  # Updated lints
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  
+  # Testing - NEW: for Phase 5 preparation
+  mockito: ^5.4.6
+  build_runner: ^2.4.14
+  riverpod_generator: ^4.0.0+1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/college_logo.png"
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/
+
+flutter_native_splash:
+  color: "#0D47A1"
+  android: true
+  ios: true
+  android_12:
+    color: "#0D47A1"

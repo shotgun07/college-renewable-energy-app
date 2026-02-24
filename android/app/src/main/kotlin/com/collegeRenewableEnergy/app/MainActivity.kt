@@ -1,0 +1,5 @@
+package com.collegeRenewableEnergy.app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

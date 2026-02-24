@@ -1,0 +1,95 @@
+enum UserRole { student, teacher, supervisor, admin }
+
+class AppUser {
+  final String uid;
+  final String fullName;
+  final String departmentName;
+  final int semester;
+  final UserRole role;
+
+  final String phoneNumber; 
+  final String? email; 
+  final String nationalId;
+  final String studentID;
+
+
+  final String? city;
+  final String? landmark;
+
+
+  final bool biometricEnabled;
+  final bool twoFactorEnabled;
+  final String? profileImageUrl;
+
+  AppUser({
+    required this.uid,
+    required this.fullName,
+    required this.departmentName,
+    required this.semester,
+    required this.role,
+    required this.phoneNumber,
+    this.email,
+    required this.nationalId,
+    required this.studentID,
+    this.city,
+    this.landmark,
+    this.biometricEnabled = false,
+    this.twoFactorEnabled = false,
+    this.profileImageUrl,
+  });
+
+  static UserRole roleFrom(dynamic value) {
+    final v = (value ?? '').toString().trim().toLowerCase();
+    if (v == 'admin') return UserRole.admin;
+    if (v == 'supervisor') return UserRole.supervisor;
+    if (v == 'teacher') return UserRole.teacher;
+    return UserRole.student;
+  }
+
+  factory AppUser.fromMap(String uid, Map<String, dynamic>? data) {
+    final d = data ?? {};
+    return AppUser(
+      uid: uid,
+      fullName: (d['fullName'] ?? '').toString(),
+      phoneNumber: (d['phoneNumber'] ?? '').toString(),
+      email: d['email']?.toString(), 
+      nationalId: (d['nationalId'] ?? '').toString().trim(),
+      studentID: (d['studentID'] ?? '').toString().trim(),
+      departmentName:
+          (d['departmentName'] ?? d['department'] ?? 'عام').toString(),
+      semester: _parseInt(d['semester'], fallback: 1),
+      role: roleFrom(d['role']),
+      city: d['city']?.toString(),
+      landmark: d['landmark']?.toString(),
+      biometricEnabled: d['biometricEnabled'] == true,
+      twoFactorEnabled: d['twoFactorEnabled'] == true,
+      profileImageUrl: d['profileImageUrl']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'email': email,
+      'nationalId': nationalId,
+      'studentID': studentID,
+      'departmentName': departmentName,
+      'semester': semester,
+      'role': role.name,
+      'city': city,
+      'landmark': landmark,
+      'biometricEnabled': biometricEnabled,
+      'twoFactorEnabled': twoFactorEnabled,
+      'profileImageUrl': profileImageUrl,
+    };
+  }
+
+  static int _parseInt(dynamic v, {int fallback = 1}) {
+    if (v == null) return fallback;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? fallback;
+  }
+}

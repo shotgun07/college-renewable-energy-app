@@ -1,0 +1,7 @@
+connectorId: example
+generate:
+  dartSdk:
+    - outputDir: ..\..\lib\dataconnect_generated
+      package: dataconnect_generated/generated.dart
+    - outputDir: ..\..\college_admin_dashboard\lib\dataconnect_generated
+      package: dataconnect_generated/generated.dart
