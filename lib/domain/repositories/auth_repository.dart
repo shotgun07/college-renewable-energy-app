@@ -1,5 +1,4 @@
 import '../entities/user.dart';
-import '../../core/errors/auth_exceptions.dart';
 
 
 abstract class AuthRepository {
