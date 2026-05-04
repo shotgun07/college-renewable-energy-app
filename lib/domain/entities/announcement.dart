@@ -3,7 +3,7 @@ class Announcement {
   final String title;
   final String body;
   final String department;
-  final int semester; // 0 means all semesters
+  final int semester; 
   final DateTime createdAt;
 
   const Announcement({

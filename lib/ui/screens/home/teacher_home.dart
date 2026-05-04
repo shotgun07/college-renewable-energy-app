@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
-import '../../../services/chat_service.dart';
 import '../../../presentation/providers/auth_provider.dart';
+import '../../../presentation/providers/chat_provider.dart';
 import '../../widgets/teacher/teacher_scaffold.dart';
 import '../../widgets/common/glass_components.dart';
 import '../../widgets/verification_banner_widget.dart';
@@ -13,7 +12,6 @@ import '../schedules/teacher_schedule_screen.dart';
 import '../stats/teacher_stats_screen.dart';
 import '../settings/teacher_settings_screen.dart';
 import '../profile/teacher_profile_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TeacherHome extends ConsumerWidget {
   const TeacherHome({super.key});
@@ -27,60 +25,45 @@ class TeacherHome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
-    final firebaseUser = auth.FirebaseAuth.instance.currentUser;
+    final user = ref.watch(currentUserProvider);
 
-    return authState.when(
-      loading: () => const Scaffold(
+    if (user == null) {
+      return const Scaffold(
         backgroundColor: Color(0xFF0F172A),
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
-      ),
-      error: (e, st) => Scaffold(
-        backgroundColor: const Color(0xFF0F172A),
-        body: Center(child: Text("خطأ: \$e", style: const TextStyle(color: Colors.white))),
-      ),
-      data: (user) {
-        return TeacherScaffold(
-          title: 'بوابة الأستاذ',
-          actions: [
-            if (firebaseUser != null)
-              _TeacherChatBadgeIcon(
-                uid: firebaseUser.uid,
-                onTap: () => _openChat(context),
+      );
+    }
+
+    return TeacherScaffold(
+      title: 'بوابة الأستاذ',
+      actions: [
+        _TeacherChatBadgeIcon(
+          uid: user.uid,
+          onTap: () => _openChat(context),
+        ),
+      ],
+      drawer: _buildPremiumDrawer(context, user, ref),
+      body: Column(
+        children: [
+          VerificationBannerWidget(userId: user.uid),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildWelcomeCard(user.fullName, user.departmentName, user.specialization),
+                  const SizedBox(height: 30),
+                  _buildGridMenu(context),
+                ],
               ),
-          ],
-          drawer: _buildPremiumDrawer(context, user, ref),
-          body: Column(
-            children: [
-              // Verification banner for unverified teachers
-              if (firebaseUser != null)
-                VerificationBannerWidget(
-                  userId: firebaseUser.uid,
-                ),
-              // Main content
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildWelcomeCard(user?.fullName),
-                        const SizedBox(height: 30),
-                        _buildGridMenu(context),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildWelcomeCard(String? name) {
+  Widget _buildWelcomeCard(String name, String dept, String? specialization) {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
@@ -96,22 +79,37 @@ class TeacherHome extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const CircleAvatar(
-            radius: 35,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, size: 40, color: Color(0xFF1976D2)),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const CircleAvatar(
+              radius: 35,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 40, color: Color(0xFF1976D2)),
+            ),
           ),
           const SizedBox(height: 15),
           Text(
-            'مرحباً بك، \${name ?? "يا أستاذ"}',
+            'مرحباً، $name',
             style: const TextStyle(
                 fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'لوحة التحكم الأكاديمية',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+          const SizedBox(height: 6),
+          Text(
+            dept.isNotEmpty ? 'قسم $dept' : 'لوحة التحكم الأكاديمية',
+            style: const TextStyle(color: Colors.white70, fontSize: 15),
           ),
+          if (specialization != null && specialization.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              specialization,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+          ],
         ],
       ),
     );
@@ -279,57 +277,30 @@ class TeacherHome extends ConsumerWidget {
   }
 }
 
-class _TeacherChatBadgeIcon extends StatelessWidget {
+class _TeacherChatBadgeIcon extends ConsumerWidget {
   final String uid;
   final VoidCallback onTap;
 
   const _TeacherChatBadgeIcon({required this.uid, required this.onTap});
 
-  int _unreadCount(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
-    int c = 0;
-    for (final d in docs) {
-      final data = d.data();
-      final updatedAt = data['updatedAt'];
-      final readMap = data['read'];
-
-      DateTime? updated;
-      if (updatedAt is Timestamp) updated = updatedAt.toDate();
-
-      DateTime? readTime;
-      if (readMap is Map && readMap[uid] is Timestamp) {
-        readTime = (readMap[uid] as Timestamp).toDate();
-      }
-
-      if (updated != null) {
-        if (readTime == null || readTime.isBefore(updated)) c++;
-      }
-    }
-    return c;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final chat = ChatService(); // NOTE: Might want to refactor this too eventually
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCountAsync = ref.watch(unreadCountProvider(uid));
 
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: chat.watchMyThreads(uid),
-      builder: (context, snap) {
-        final docs = snap.data?.docs ?? const [];
-        final unread = _unreadCount(docs);
-
-        return IconButton(
-          onPressed: onTap,
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.chat_bubble_outline, color: Colors.white),
-              if (unread > 0)
-                Positioned(
+    return IconButton(
+      onPressed: onTap,
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          unreadCountAsync.when(
+            data: (unread) {
+              if (unread > 0) {
+                return Positioned(
                   right: -6,
                   top: -6,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(12),
@@ -342,11 +313,15 @@ class _TeacherChatBadgeIcon extends StatelessWidget {
                           fontWeight: FontWeight.bold),
                     ),
                   ),
-                ),
-            ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

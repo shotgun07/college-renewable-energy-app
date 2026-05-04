@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:provider/provider.dart' as legacy;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/app_user.dart';
-import '../../providers/theme_provider.dart';
+import '../../constants/app_enums.dart';
+import '../../main.dart' show themeProvider;
 import '../../widgets/glass_components.dart';
 import '../screens/feedback_analytics_screen.dart';
+import '../screens/users_management_screen.dart';
+import '../screens/notifications_screen.dart';
 
-class DashboardHome extends StatefulWidget {
+class DashboardHome extends ConsumerStatefulWidget {
   final AppUser user;
 
   const DashboardHome({super.key, required this.user});
 
   @override
-  State<DashboardHome> createState() => _DashboardHomeState();
+  ConsumerState<DashboardHome> createState() => _DashboardHomeState();
 }
 
-class _DashboardHomeState extends State<DashboardHome> {
+class _DashboardHomeState extends ConsumerState<DashboardHome> {
   int _totalStudents = 0;
   int _totalTeachers = 0;
   int _totalCourses = 0;
@@ -79,7 +82,7 @@ class _DashboardHomeState extends State<DashboardHome> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = legacy.Provider.of<ThemeProvider>(context);
+    final theme = ref.watch(themeProvider);
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -97,7 +100,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: themeProvider.isDarkMode
+                      color: theme.isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),
@@ -107,7 +110,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     widget.user.role == UserRole.admin ? 'مدير النظام' : 'مشرف',
                     style: TextStyle(
                       fontSize: 16,
-                      color: themeProvider.isDarkMode
+                      color: theme.isDarkMode
                           ? Colors.white60
                           : Colors.black54,
                     ),
@@ -125,7 +128,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: themeProvider.isDarkMode
+                      color: theme.isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),
@@ -141,7 +144,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: themeProvider.isDarkMode
+                      color: theme.isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),
@@ -247,7 +250,16 @@ class _DashboardHomeState extends State<DashboardHome> {
           icon: Icons.people_alt,
           color: Colors.blue,
           onTap: () {
-            // Navigate to students management
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('إدارة الطلاب'), backgroundColor: const Color(0xFF1E293B)),
+                  backgroundColor: const Color(0xFF0F172A),
+                  body: UsersManagementScreen(user: widget.user),
+                ),
+              ),
+            );
           },
         ),
         GlassTile(
@@ -256,7 +268,16 @@ class _DashboardHomeState extends State<DashboardHome> {
           icon: Icons.person,
           color: Colors.green,
           onTap: () {
-            // Navigate to teachers management
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text('إدارة المعلمين'), backgroundColor: const Color(0xFF1E293B)),
+                  backgroundColor: const Color(0xFF0F172A),
+                  body: UsersManagementScreen(user: widget.user), // Could pass a role filter if supported
+                ),
+              ),
+            );
           },
         ),
         GlassTile(
@@ -265,7 +286,9 @@ class _DashboardHomeState extends State<DashboardHome> {
           icon: Icons.menu_book,
           color: Colors.orange,
           onTap: () {
-            // Navigate to courses management
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('شاشة إدارة المواد قيد التطوير')),
+            );
           },
         ),
         GlassTile(
@@ -274,7 +297,9 @@ class _DashboardHomeState extends State<DashboardHome> {
           icon: Icons.video_library,
           color: Colors.purple,
           onTap: () {
-            // Navigate to lectures management
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('شاشة إدارة المحاضرات قيد التطوير')),
+            );
           },
         ),
         GlassTile(
@@ -283,7 +308,12 @@ class _DashboardHomeState extends State<DashboardHome> {
           icon: Icons.notifications_active,
           color: Colors.red,
           onTap: () {
-            // Navigate to send notification
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NotificationsScreen(user: widget.user),
+              ),
+            );
           },
         ),
         GlassTile(

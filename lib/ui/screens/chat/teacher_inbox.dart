@@ -28,13 +28,27 @@ class TeacherInbox extends ConsumerWidget {
     final threadsAsync = ref.watch(myThreadsProvider(uid));
 
     return TeacherScaffold(
-      title: 'محادثات الأستاذ',
+      title: 'المحادثات الواردة',
       body: threadsAsync.when(
         data: (threads) {
           if (threads.isEmpty) {
-            return const Center(
-                child: Text('لا توجد محادثات',
-                    style: TextStyle(color: Colors.white70)));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.mark_chat_unread_outlined,
+                      size: 70, color: Colors.white.withValues(alpha: 0.15)),
+                  const SizedBox(height: 16),
+                  const Text('لا توجد محادثات بعد',
+                      style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Text('ستظهر هنا محادثات الطلاب معك',
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          fontSize: 13)),
+                ],
+              ),
+            );
           }
 
           return ListView.builder(

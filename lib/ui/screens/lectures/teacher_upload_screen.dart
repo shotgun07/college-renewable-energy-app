@@ -97,9 +97,27 @@ class _TeacherUploadScreenState extends ConsumerState<TeacherUploadScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إضافة المحتوى بنجاح')),
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('تم نشر المحتوى بنجاح ✅'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
       );
-      Navigator.pop(context);
+      // Reset form for next upload
+      _formKey.currentState?.reset();
+      setState(() {
+        _selectedCourseId = null;
+        _pickedFile = null;
+        _urlController.clear();
+        _titleController.clear();
+        _selectedType = ResourceType.pdf;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,28 +190,53 @@ class _TeacherUploadScreenState extends ConsumerState<TeacherUploadScreen> {
               const SizedBox(height: 20),
               if (_selectedType == ResourceType.pdf)
                 InkWell(
-                  onTap: _pickFile,
-                  child: Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            color: Colors.white30, style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(15),
-                        color: Colors.white.withValues(alpha: 0.05)),
-                    child: Column(
-                      children: [
-                        Icon(Icons.cloud_upload,
-                            size: 40,
+                onTap: _pickFile,
+                borderRadius: BorderRadius.circular(15),
+                child: Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: _pickedFile != null
+                            ? Colors.greenAccent.withValues(alpha: 0.5)
+                            : Colors.white30,
+                        style: BorderStyle.solid,
+                        width: 1.5),
+                    borderRadius: BorderRadius.circular(15),
+                    color: _pickedFile != null
+                        ? Colors.greenAccent.withValues(alpha: 0.05)
+                        : Colors.white.withValues(alpha: 0.04)),
+                  child: Column(
+                    children: [
+                      Icon(
+                        _pickedFile != null
+                            ? Icons.check_circle_outline
+                            : Icons.cloud_upload_outlined,
+                        size: 40,
+                        color: _pickedFile != null
+                            ? Colors.greenAccent
+                            : Colors.white54),
+                      const SizedBox(height: 10),
+                      Text(
+                        _pickedFile?.name ?? 'اضغط لاختيار ملف PDF/PPT/DOC',
+                        style: TextStyle(
                             color: _pickedFile != null
-                                ? Colors.green
-                                : Colors.white54),
-                        const SizedBox(height: 10),
-                        Text(_pickedFile?.name ?? 'اضغط لرفع ملف',
-                            style: const TextStyle(color: Colors.white)),
+                                ? Colors.greenAccent
+                                : Colors.white70,
+                            fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_pickedFile != null && _pickedFile!.size > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'حجم الملف: ${(_pickedFile!.size / 1024 / 1024).toStringAsFixed(2)} MB',
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11),
+                        ),
                       ],
-                    ),
+                    ],
                   ),
-                )
+                ),
+              )
               else
                 GlassTextField(
                   controller: _urlController,

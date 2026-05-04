@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../presentation/providers/auth_provider.dart';
 
-class AdminNotAllowedScreen extends StatelessWidget {
+class AdminNotAllowedScreen extends ConsumerWidget {
   const AdminNotAllowedScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final email = ref.watch(currentUserProvider)?.email ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('غير مسموح')),
@@ -30,7 +31,7 @@ class AdminNotAllowedScreen extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () => FirebaseAuth.instance.signOut(),
+                onPressed: () => ref.read(authProvider.notifier).signOut(),
                 icon: const Icon(Icons.logout),
                 label: const Text('تسجيل الخروج'),
               ),

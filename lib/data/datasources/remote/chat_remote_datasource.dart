@@ -12,7 +12,6 @@ class ChatRemoteDatasource {
 
   FirebaseFirestore get firestore => _firestore;
 
-  /// Get admin UID from config
   Future<String> getAdminUid() async {
     const fallback = 'ADMIN_UID_HERE';
     if (_cachedAdminUid != null && _cachedAdminUid!.trim().isNotEmpty) {
@@ -32,13 +31,11 @@ class ChatRemoteDatasource {
     }
   }
 
-  /// Generate thread ID
   String generateThreadId(String userA, String userB, String type) {
     final ids = [userA, userB]..sort();
     return '${type}_${ids[0]}_${ids[1]}';
   }
 
-  /// Fetch a user's E2EE public key from Firestore
   Future<String?> getUserPublicKey(String uid) async {
     try {
       final source = _offlineService.isOnline ? Source.serverAndCache : Source.cache;
@@ -49,7 +46,6 @@ class ChatRemoteDatasource {
     }
   }
 
-  /// Ensure thread exists
   Future<void> ensureThread(ChatThreadModel thread) async {
     final ref = _firestore.collection('threads').doc(thread.id);
     final source = _offlineService.isOnline ? Source.serverAndCache : Source.cache;
@@ -65,21 +61,20 @@ class ChatRemoteDatasource {
     }
   }
 
-  /// Get user's threads
   Stream<List<ChatThreadModel>> getMyThreads(String uid) {
     return _firestore
         .collection('threads')
         .where('participants', arrayContains: uid)
-        .orderBy('updatedAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
+      final docs = snapshot.docs
           .map((doc) => ChatThreadModel.fromFirestore(doc))
           .toList();
+      docs.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      return docs;
     });
   }
 
-  /// Get messages for thread
   Stream<List<MessageModel>> getMessages(String threadId, {int limit = 50, DateTime? startAfter}) {
     var query = _firestore
         .collection('threads')
@@ -99,7 +94,6 @@ class ChatRemoteDatasource {
     });
   }
 
-  /// Send message
   Future<void> sendMessage(String threadId, MessageModel message) async {
     final threadRef = _firestore.collection('threads').doc(threadId);
     final msgRef = threadRef.collection('messages').doc();
@@ -122,7 +116,6 @@ class ChatRemoteDatasource {
     });
   }
 
-  /// Mark thread as read
   Future<void> markThreadAsRead(String threadId, String uid) async {
     final ref = _firestore.collection('threads').doc(threadId);
     await ref.set(
@@ -133,7 +126,6 @@ class ChatRemoteDatasource {
     );
   }
 
-  /// Mark specific message as read
   Future<void> markMessageAsRead(String threadId, String messageId) async {
     final msgRef = _firestore
         .collection('threads')
@@ -144,7 +136,6 @@ class ChatRemoteDatasource {
     await msgRef.update({'isRead': true});
   }
 
-  /// Get unread count
   Stream<int> getUnreadCount(String uid) {
     return getMyThreads(uid).map((threads) {
       int total = 0;

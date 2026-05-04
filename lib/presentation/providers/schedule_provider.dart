@@ -25,8 +25,7 @@ ScheduleRepository scheduleRepository(Ref ref) {
 }
 
 @riverpod
-Stream<List<Map<String, dynamic>>> scheduleStream(
-    Ref ref, String deptCode, int semester) {
+Stream<List<Map<String, dynamic>>> scheduleStream(Ref ref, String deptCode, int semester) {
   return ref.watch(scheduleRepositoryProvider).getSchedule(deptCode, semester);
 }
 

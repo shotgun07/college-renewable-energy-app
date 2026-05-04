@@ -1,38 +1,41 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/remote/course_remote_datasource.dart';
 import '../../data/repositories/course_repository_impl.dart';
 import '../../domain/repositories/course_repository.dart';
 import '../../domain/entities/course.dart';
 import '../../domain/entities/course_resource.dart';
 
-part 'course_provider.g.dart';
+// Explicit Riverpod providers (avoids depending on generated *.g.dart files)
 
-@riverpod
-CourseRemoteDatasource courseRemoteDatasource(Ref ref) {
+final courseRemoteDatasourceProvider = Provider<CourseRemoteDatasource>((ref) {
   return CourseRemoteDatasource();
-}
+});
 
-@riverpod
-CourseRepository courseRepository(Ref ref) {
+final courseRepositoryProvider = Provider<CourseRepository>((ref) {
   return CourseRepositoryImpl(
     remoteDatasource: ref.watch(courseRemoteDatasourceProvider),
   );
-}
+});
 
-@riverpod
-Stream<List<Course>> coursesStream(Ref ref) {
+final coursesStreamProvider = StreamProvider<List<Course>>((ref) {
   return ref.watch(courseRepositoryProvider).watchCourses();
+});
+
+class DeptSemesterParams {
+  final String department;
+  final int semester;
+  DeptSemesterParams(this.department, this.semester);
 }
 
-@riverpod
-Stream<List<Course>> coursesByDeptSemester(
-    Ref ref, String department, int semester) {
-  return ref.watch(courseRepositoryProvider).coursesByDeptSemester(department, semester);
-}
+final coursesByDeptSemesterProvider =
+    StreamProvider.family<List<Course>, DeptSemesterParams>((ref, params) {
+  return ref
+      .watch(courseRepositoryProvider)
+      .coursesByDeptSemester(params.department, params.semester);
+});
 
-@riverpod
-Stream<List<CourseResource>> courseResources(
-    Ref ref, String courseId) {
+final courseResourcesProvider =
+    StreamProvider.family<List<CourseResource>, String>((ref, courseId) {
   return ref.watch(courseRepositoryProvider).courseResources(courseId);
-}
+});
 

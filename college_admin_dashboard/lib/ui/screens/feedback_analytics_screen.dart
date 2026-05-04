@@ -82,7 +82,7 @@ class FeedbackAnalyticsScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${f.departmentName} - ${DateFormat('yyyy/MM/dd hh:mm a').format(f.submittedAt)}',
+                                '${f.department.displayName} - ${DateFormat('yyyy/MM/dd hh:mm a').format(f.submittedAt)}',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.blueAccent),
                               ),

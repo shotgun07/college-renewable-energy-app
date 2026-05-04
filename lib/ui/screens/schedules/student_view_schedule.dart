@@ -34,19 +34,19 @@ class StudentViewSchedule extends ConsumerWidget {
 
     return authState.when(
       loading: () => const StudentScaffold(
-        title: "?????? ???????",
+        title: "الجدول الدراسي",
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       ),
       error: (e, st) => StudentScaffold(
-        title: "?????? ???????",
-        body: Center(child: Text("???: $e", style: const TextStyle(color: Colors.white))),
+        title: "الجدول الدراسي",
+        body: Center(child: Text("خطأ: $e", style: const TextStyle(color: Colors.white))),
       ),
       data: (user) {
         if (user == null) {
           return const StudentScaffold(
-            title: "?????? ???????",
+            title: "الجدول الدراسي",
             body: Center(
-                child: Text("??? ????? ?????? ?????",
+                child: Text("يرجى تسجيل الدخول أولاً",
                     style: TextStyle(color: Colors.white))),
           );
         }
@@ -58,11 +58,28 @@ class StudentViewSchedule extends ConsumerWidget {
         final schedulesAsync = ref.watch(scheduleStreamProvider(deptCode, semester));
 
         return StudentScaffold(
-          title: "?????? ???????",
+          title: "جدول $deptName • فصل $semester",
           body: schedulesAsync.when(
             loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
             error: (e, st) => Center(
-                child: Text("???: $e", style: const TextStyle(color: Colors.white))),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.wifi_off_rounded, size: 65, color: Colors.white38),
+                  const SizedBox(height: 16),
+                  const Text("تعذّر تحميل الجدول",
+                      style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(scheduleStreamProvider(deptCode, semester)),
+                    icon: const Icon(Icons.refresh, color: Colors.white54),
+                    label: const Text("أعد المحاولة",
+                        style: TextStyle(color: Colors.white54)),
+                  ),
+                ],
+              ),
+            ),
             data: (docs) {
               if (docs.isEmpty) {
                 return Center(
@@ -70,10 +87,11 @@ class StudentViewSchedule extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          size: 60, color: Colors.white.withValues(alpha: 0.2)),
-                      const SizedBox(height: 15),
+                          size: 70,
+                          color: Colors.white.withValues(alpha: 0.15)),
+                      const SizedBox(height: 16),
                       Text(
-                        "?? ???? ???? ????? ???? $deptName (??? $semester) ??????",
+                        "لا يوجد جدول لـ $deptName\n(الفصل $semester) حالياً",
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                         textAlign: TextAlign.center,
                       ),
@@ -83,7 +101,7 @@ class StudentViewSchedule extends ConsumerWidget {
               }
 
               final data = docs.first;
-              final title = (data['title'] ?? '?????? ???????').toString();
+              final title = (data['title'] ?? 'الجدول الدراسي').toString();
               final items = (data['items'] is List) ? (data['items'] as List) : [];
 
               return ListView(
@@ -100,7 +118,7 @@ class StudentViewSchedule extends ConsumerWidget {
                   const SizedBox(height: 20),
                   if (items.isEmpty)
                     const Center(
-                        child: Text("?????? ????? ??? ???? ?????",
+                        child: Text("الجدول فارغ، لم تُضف مواد بعد",
                             style: TextStyle(color: Colors.white38)))
                   else
                     ...items.map((e) {
@@ -130,7 +148,7 @@ class StudentViewSchedule extends ConsumerWidget {
                             child: const Icon(Icons.calendar_month, color: Colors.blue),
                           ),
                           title: Text(
-                            course.isEmpty ? "??????" : course,
+                            course.isEmpty ? "مادة" : course,
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,

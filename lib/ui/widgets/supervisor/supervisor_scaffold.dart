@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../presentation/providers/auth_provider.dart';
 import '../common/theme_toggle_button.dart';
 
-class SupervisorScaffold extends StatelessWidget {
+class SupervisorScaffold extends ConsumerWidget {
   final String title;
   final Widget body;
   final List<Widget>? actions;
@@ -19,7 +20,7 @@ class SupervisorScaffold extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -34,7 +35,7 @@ class SupervisorScaffold extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: actions,
       ),
-      drawer: drawer ?? _buildDefaultDrawer(context),
+      drawer: drawer ?? _buildDefaultDrawer(context, ref),
       body: Stack(
         children: [
           Positioned.fill(
@@ -65,7 +66,7 @@ class SupervisorScaffold extends StatelessWidget {
     );
   }
 
-  Widget _buildDefaultDrawer(BuildContext context) {
+  Widget _buildDefaultDrawer(BuildContext context, WidgetRef ref) {
     return Drawer(
       child: Container(
         decoration: const BoxDecoration(
@@ -102,7 +103,7 @@ class SupervisorScaffold extends StatelessWidget {
               title: const Text('تسجيل الخروج',
                   style: TextStyle(color: Colors.white)),
               onTap: () async {
-                await FirebaseAuth.instance.signOut();
+                await ref.read(authProvider.notifier).signOut();
                 if (context.mounted) {
                   Navigator.of(context)
                       .pushNamedAndRemoveUntil('/', (route) => false);

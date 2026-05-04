@@ -4,6 +4,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../models/app_user.dart';
+import '../../constants/app_enums.dart';
+import '../../widgets/glass_components.dart';
 
 class ReportsScreen extends StatefulWidget {
   final AppUser user;
@@ -26,7 +28,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         children: [
           const Text(
             'تقارير متاحة',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 20),
           _buildReportCard(
@@ -67,62 +69,70 @@ class _ReportsScreenState extends State<ReportsScreen> {
     required IconData icon,
     required VoidCallback onGenerate,
   }) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 32, color: Colors.blue),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isGenerating ? null : onGenerate,
-                icon: _isGenerating
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.picture_as_pdf),
-                label:
-                    Text(_isGenerating ? 'جاري الإنشاء...' : 'إنشاء تقرير PDF'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Icon(icon, size: 28, color: Colors.blueAccent),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    ),
+                  ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isGenerating ? null : onGenerate,
+              icon: _isGenerating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.picture_as_pdf),
+              label:
+                  Text(_isGenerating ? 'جاري الإنشاء...' : 'إنشاء تقرير PDF'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -131,11 +141,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isGenerating = true);
 
     try {
-      final usersSnap =
-          await FirebaseFirestore.instance.collection('users').get();
+      Query query = FirebaseFirestore.instance.collection('users');
+      if (widget.user.role == UserRole.supervisor) {
+        query = query.where('departmentName', isEqualTo: widget.user.department.displayName);
+      }
+      final usersSnap = await query.get();
       if (!context.mounted) return;
       final users = usersSnap.docs.map((doc) {
-        return AppUser.fromMap(doc.id, doc.data());
+        return AppUser.fromMap(doc.id, doc.data() as Map<String, dynamic>?);
       }).toList();
 
       final pdf = pw.Document();
@@ -185,10 +198,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isGenerating = true);
 
     try {
-      final coursesSnap =
-          await FirebaseFirestore.instance.collection('courses').get();
-      final lecturesSnap =
-          await FirebaseFirestore.instance.collection('lectures').get();
+      Query coursesQuery = FirebaseFirestore.instance.collection('courses');
+      Query lecturesQuery = FirebaseFirestore.instance.collection('lectures');
+      
+      if (widget.user.role == UserRole.supervisor) {
+        coursesQuery = coursesQuery.where('departmentName', isEqualTo: widget.user.department.displayName);
+        lecturesQuery = lecturesQuery.where('departmentName', isEqualTo: widget.user.department.displayName);
+      }
+
+      final coursesSnap = await coursesQuery.get();
+      final lecturesSnap = await lecturesQuery.get();
       if (!context.mounted) return;
 
       final pdf = pw.Document();
@@ -240,8 +259,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isGenerating = true);
 
     try {
-      final attendanceSnap =
-          await FirebaseFirestore.instance.collection('attendance').get();
+      Query attendanceQuery = FirebaseFirestore.instance.collection('attendance');
+      if (widget.user.role == UserRole.supervisor) {
+        attendanceQuery = attendanceQuery.where('departmentName', isEqualTo: widget.user.department.displayName);
+      }
+      final attendanceSnap = await attendanceQuery.get();
 
       final pdf = pw.Document();
 
@@ -299,8 +321,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     setState(() => _isGenerating = true);
 
     try {
-      final announcementsSnap =
-          await FirebaseFirestore.instance.collection('announcements').get();
+      Query announcementsQuery = FirebaseFirestore.instance.collection('announcements');
+      if (widget.user.role == UserRole.supervisor) {
+        announcementsQuery = announcementsQuery.where('departmentName', isEqualTo: widget.user.department.displayName);
+      }
+      final announcementsSnap = await announcementsQuery.get();
 
       final pdf = pw.Document();
 

@@ -27,7 +27,7 @@ class StudentHome extends ConsumerWidget {
     if (user == null) {
       // In case we are somehow here without a user (e.g. initial load or direct nav)
       return const StudentScaffold(
-        title: '????? ??????',
+        title: 'تسجيل الدخول',
         isLoading: true,
         body: SizedBox(),
       );
@@ -39,7 +39,7 @@ class StudentHome extends ConsumerWidget {
     final studentID = user.studentID;
 
     return StudentScaffold(
-      title: '????? ?????? ??????',
+      title: 'كلية الطاقة المتجددة',
       showBackButton: false,
       drawer:
           _buildDrawer(context, ref, fullName, deptName, semester, studentID),
@@ -49,6 +49,8 @@ class StudentHome extends ConsumerWidget {
           VerificationBannerWidget(
             userId: user.uid,
           ),
+          if (studentID.trim().isEmpty || studentID == 'null')
+            const _EnrollmentBannerWidget(),
           // Main content
           Expanded(
             child: SingleChildScrollView(
@@ -67,11 +69,21 @@ class StudentHome extends ConsumerWidget {
                       crossAxisCount: 2,
                       crossAxisSpacing: 15,
                       mainAxisSpacing: 15,
-                      childAspectRatio: 1.1,
+                      childAspectRatio: 1.0,
                     ),
                     children: [
                       _QuickAccessCard(
-                        title: '??????',
+                        title: 'الإعلانات',
+                        icon: Icons.campaign,
+                        color: Colors.redAccent,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const StudentViewAnnouncements()),
+                        ),
+                      ),
+                      _QuickAccessCard(
+                        title: 'جدولي',
                         icon: Icons.calendar_month,
                         color: Colors.orangeAccent,
                         onTap: () => Navigator.push(
@@ -82,13 +94,13 @@ class StudentHome extends ConsumerWidget {
                         ),
                       ),
                       _QuickAccessCard(
-                        title: '???????',
+                        title: 'النتائج',
                         icon: Icons.emoji_events,
                         color: Colors.greenAccent,
                         onTap: () => _openResults(context, studentID),
                       ),
                       _QuickAccessCard(
-                        title: '???????',
+                        title: 'المكتبة',
                         icon: Icons.menu_book,
                         color: Colors.purpleAccent,
                         onTap: () => Navigator.push(
@@ -99,7 +111,7 @@ class StudentHome extends ConsumerWidget {
                         ),
                       ),
                       _QuickAccessCard(
-                        title: '?????',
+                        title: 'مقرراتي',
                         icon: Icons.class_,
                         color: Colors.blueAccent,
                         onTap: () => Navigator.push(
@@ -110,7 +122,7 @@ class StudentHome extends ConsumerWidget {
                         ),
                       ),
                       _QuickAccessCard(
-                        title: '???????',
+                        title: 'الدردشة',
                         icon: Icons.forum,
                         color: Colors.pinkAccent,
                         onTap: () => Navigator.push(
@@ -122,7 +134,7 @@ class StudentHome extends ConsumerWidget {
                         ),
                       ),
                       _QuickAccessCard(
-                        title: '??????? ?????',
+                        title: 'المساعد الذكي',
                         icon: Icons.auto_awesome,
                         color: Colors.cyanAccent,
                         onTap: () => Navigator.push(
@@ -180,12 +192,12 @@ class StudentHome extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '?????: $dept | ?????: $semester',
+            'القسم: $dept | الفصل: $semester',
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           if (studentID.isNotEmpty && studentID != 'null')
             Text(
-              '??? ?????: $studentID',
+              'رقم القيد: $studentID',
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
         ],
@@ -207,7 +219,7 @@ class StudentHome extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '???? ???? ?? ??????? ????? ?????',
+              'انقر على أي قسم لفتح محتواه',
               style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8), fontSize: 15),
             ),
@@ -239,7 +251,7 @@ class StudentHome extends ConsumerWidget {
               accountName: Text(name,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
-              accountEmail: Text('$dept - ??? $semester',
+              accountEmail: Text('$dept - الفصل $semester',
                   style: const TextStyle(color: Colors.white70)),
               currentAccountPicture: Container(
                 decoration: BoxDecoration(
@@ -249,9 +261,9 @@ class StudentHome extends ConsumerWidget {
                 child: const CircleAvatar(child: Icon(Icons.person, size: 30)),
               ),
             ),
-            _drawerItem(context, Icons.home, '????????', Colors.blue,
+            _drawerItem(context, Icons.home, 'الرئيسية', Colors.blue,
                 () => Navigator.pop(context)),
-            _drawerItem(context, Icons.calendar_month, '?????? ???????',
+            _drawerItem(context, Icons.calendar_month, 'الجدول الدراسي',
                 Colors.orangeAccent, () {
               Navigator.pop(context);
               Navigator.push(
@@ -260,12 +272,12 @@ class StudentHome extends ConsumerWidget {
                       builder: (_) => StudentViewSchedule(department: dept)));
             }),
             _drawerItem(
-                context, Icons.emoji_events, '???????', Colors.greenAccent, () {
+                context, Icons.emoji_events, 'النتائج', Colors.greenAccent, () {
               Navigator.pop(context);
               _openResults(context, studentID);
             }),
             _drawerItem(
-                context, Icons.menu_book, '???????', Colors.purpleAccent, () {
+                context, Icons.menu_book, 'المكتبة', Colors.purpleAccent, () {
               Navigator.pop(context);
               Navigator.push(
                   context,
@@ -273,7 +285,7 @@ class StudentHome extends ConsumerWidget {
                       builder: (_) => StudentLibraryScreen(
                           department: dept, semester: semester)));
             }),
-            _drawerItem(context, Icons.campaign, '?????????', Colors.blueAccent,
+            _drawerItem(context, Icons.campaign, 'الإعلانات', Colors.blueAccent,
                 () {
               Navigator.pop(context);
               Navigator.push(
@@ -281,7 +293,7 @@ class StudentHome extends ConsumerWidget {
                   MaterialPageRoute(
                       builder: (_) => const StudentViewAnnouncements()));
             }),
-            _drawerItem(context, Icons.forum, '???????', Colors.pinkAccent, () {
+            _drawerItem(context, Icons.forum, 'الدردشة', Colors.pinkAccent, () {
               Navigator.pop(context);
               Navigator.push(
                   context,
@@ -289,14 +301,14 @@ class StudentHome extends ConsumerWidget {
                       builder: (_) => StudentChatHub(
                           departmentName: dept, semester: semester)));
             }),
-            _drawerItem(context, Icons.star_rate, '????? ???????', Colors.yellowAccent, () {
+            _drawerItem(context, Icons.star_rate, 'التقييمات', Colors.yellowAccent, () {
               Navigator.pop(context);
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (_) => const StudentFeedbackScreen()));
             }),
-            _drawerItem(context, Icons.auto_awesome, '??????? ?????', Colors.cyanAccent, () {
+            _drawerItem(context, Icons.auto_awesome, 'المساعد الذكي', Colors.cyanAccent, () {
               Navigator.pop(context);
               Navigator.push(
                   context,
@@ -305,7 +317,7 @@ class StudentHome extends ConsumerWidget {
             }),
             const Divider(color: Colors.white12),
             _drawerItem(
-                context, Icons.account_circle, '???? ??????', Colors.tealAccent,
+                context, Icons.account_circle, 'ملفي الشخصي', Colors.tealAccent,
                 () {
               Navigator.pop(context);
               Navigator.push(context,
@@ -313,7 +325,7 @@ class StudentHome extends ConsumerWidget {
             }),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.redAccent),
-              title: const Text('????? ??????',
+              title: const Text('تسجيل الخروج',
                   style: TextStyle(color: Colors.redAccent)),
               onTap: () async {
                 // Use Riverpod provider for sign out
@@ -340,10 +352,10 @@ class StudentHome extends ConsumerWidget {
   }
 
   void _openResults(BuildContext context, String studentID) {
-    if (studentID.isEmpty || studentID == 'null') {
+    if (studentID.trim().isEmpty || studentID == 'null') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('?? ???? ??? ??????? ??? ??? ????? ??? ???? ???')),
+            content: Text('لم يتم تعيين رقم قيدك، تواصل مع الإدارة')),
       );
       return;
     }
@@ -408,6 +420,51 @@ class _QuickAccessCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EnrollmentBannerWidget extends StatelessWidget {
+  const _EnrollmentBannerWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.redAccent,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE53935), Color(0xFFEF5350)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.white,
+            size: 24,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'لم يتم تعيين رقم قيدك، لن تتمكن من استعراض النتائج.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

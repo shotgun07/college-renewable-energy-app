@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('App launches successfully', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: MyApp()));
+    await tester.pumpWidget(const ProviderScope(child: MyApp(firebaseInitialized: true)));
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

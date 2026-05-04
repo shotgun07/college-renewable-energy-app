@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/app_user.dart';
-import '../../providers/theme_provider.dart';
+import '../../main.dart' show themeProvider;
 import '../dashboard/dashboard_home.dart';
 import 'users_management_screen.dart';
 import 'reports_screen.dart';
 import 'notifications_screen.dart';
+import 'results/bulk_upload_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   final AppUser user;
 
   const MainScreen({super.key, required this.user});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
 
   late final List<Widget> _screens;
@@ -30,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       UsersManagementScreen(user: widget.user),
       ReportsScreen(user: widget.user),
       NotificationsScreen(user: widget.user),
+      const BulkUploadScreen(),
     ];
   }
 
@@ -41,17 +43,20 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final theme = ref.watch(themeProvider);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('لوحة إدارة الكلية'),
+        title: const Text('لوحة إدارة الكلية', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              theme.isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: () => themeProvider.toggleTheme(),
+            onPressed: () => theme.toggleTheme(),
             tooltip: 'تبديل المظهر',
           ),
           IconButton(
@@ -61,32 +66,53 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'لوحة التحكم',
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: theme.isDarkMode
+                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                : [Colors.blue.shade50, Colors.white],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'إدارة المستخدمين',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'التقارير',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'الإشعارات',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: themeProvider.isDarkMode ? Colors.blueAccent : Colors.blue,
-        unselectedItemColor: themeProvider.isDarkMode ? Colors.white60 : Colors.black54,
-        backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
+        ),
+        child: SafeArea(child: _screens[_selectedIndex]),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'لوحة التحكم',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'إدارة المستخدمين',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'التقارير',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'الإشعارات',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.upload_file),
+              label: 'رفع النتائج',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: theme.isDarkMode ? const Color(0xFF64B5F6) : Colors.blue,
+          unselectedItemColor: theme.isDarkMode ? Colors.white60 : Colors.black54,
+          backgroundColor: theme.isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          onTap: _onItemTapped,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
     );
   }

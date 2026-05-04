@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/errors/auth_exceptions.dart';
 import '../../../../domain/entities/user.dart';
 import '../../providers/auth_provider.dart';
-import '../../../../services/two_factor_service.dart';
 import '../../../ui/screens/auth/register_screen.dart';
-import '../../../ui/screens/auth/verify_otp_screen.dart';
 import '../../../ui/screens/home/student_home.dart';
 import '../../../ui/screens/home/teacher_home.dart';
 // import '../../../ui/screens/home/admin_home.dart'; // Uncomment when available
@@ -112,50 +110,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
   }
 
-  void _handleTwoFactor(User user) async {
-    if (user.phoneNumber.isEmpty) {
-      await ref.read(authProvider.notifier).signOut();
-      _showError("تم تفعيل المصادقة الثنائية ولكن لا يوجد رقم هاتف مسجل.");
-      return;
-    }
-
-    // Send OTP using legacy service for now (to be migrated)
-    await TwoFactorService().requestOTP(
-      phoneNumber: user.phoneNumber,
-      onCodeSent: (verificationId, resendToken) {
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VerifyOTPScreen(
-              verificationId: verificationId,
-              phoneNumber: user.phoneNumber,
-              onVerify: (smsCode) async {
-                // Here we might need a specific usecase for completing 2FA
-                // For now, assume if OTP verifies, we proceed.
-                // NOTE: VerifyOTPScreen implementation might differ.
-                // Original code did signInWithCredential AGAIN.
-                // But we are already signed in.
-                // We just need to verify the code matches.
-                // If checking code via Firebase Phone Auth, we might need a method in repo.
-
-                // For now, let's assume if they pass the screen, they are good.
-                // OR we can implement a verifyOTP method in AuthRepository later.
-                // Given the atomic constraint, sticking to similar logic:
-                // VerifyOTPScreen usually does the verification itself.
-                _navigateBasedOnRole(user);
-              },
-            ),
-          ),
-        );
-      },
-      onVerificationFailed: (e) {
-        _showError("فشل إرسال رمز التحقق: ${e.message}");
-        // We might want to sign out if 2FA fails initiation
-        ref.read(authProvider.notifier).signOut();
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,14 +118,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
       next.when(
         data: (user) {
           if (user != null) {
-            // TODO: RE-ENABLE OTP — Change kOtpEnabled to true to restore 2FA
-            const bool kOtpEnabled = false;
-            // The following check allows compilation and avoids dead code warning, but logically keeps 2FA disabled.
-            if (user.twoFactorEnabled && (kOtpEnabled == true)) {
-              _handleTwoFactor(user);
-            } else {
-              _navigateBasedOnRole(user);
-            }
+            // 2FA is disabled for this release - implementation pending
+            _navigateBasedOnRole(user);
           }
         },
         error: (error, stackTrace) {

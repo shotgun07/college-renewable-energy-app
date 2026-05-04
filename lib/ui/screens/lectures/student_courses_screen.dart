@@ -19,15 +19,15 @@ class StudentCoursesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final coursesAsync = ref.watch(coursesByDeptSemesterProvider(department, semester));
+    final coursesAsync = ref.watch(coursesByDeptSemesterProvider(DeptSemesterParams(department, semester)));
 
     return StudentScaffold(
       title: 'موادي الدراسية',
       body: coursesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
         error: (e, st) => NoInternetWidget(
-          onRetry: () {
-            ref.invalidate(coursesByDeptSemesterProvider(department, semester));
+            onRetry: () {
+            ref.invalidate(coursesByDeptSemesterProvider(DeptSemesterParams(department, semester)));
           },
         ),
         data: (courses) {
@@ -90,7 +90,7 @@ class _CourseCard extends ConsumerWidget {
               const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         children: [
-          _ResourcesList(courseId: course.id, ref: ref),
+          _ResourcesList(courseId: course.id),
         ],
       ),
     );
@@ -99,9 +99,8 @@ class _CourseCard extends ConsumerWidget {
 
 class _ResourcesList extends ConsumerWidget {
   final String courseId;
-  final WidgetRef ref;
 
-  const _ResourcesList({required this.courseId, required this.ref});
+  const _ResourcesList({required this.courseId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

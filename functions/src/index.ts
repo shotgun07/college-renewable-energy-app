@@ -1,16 +1,16 @@
-import { setGlobalOptions } from "firebase-functions";
+import {setGlobalOptions} from "firebase-functions";
 import {
   onDocumentCreated,
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
 const db = admin.firestore();
 
-setGlobalOptions({ maxInstances: 10, region: "europe-west1" });
+setGlobalOptions({maxInstances: 10, region: "europe-west1"});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Send FCM notification when a new announcement is created
@@ -31,10 +31,10 @@ export const onAnnouncementCreated = onDocumentCreated(
     try {
       await admin.messaging().send({
         topic,
-        notification: { title, body },
-        data: { type: "announcement", annId: event.params.annId },
-        android: { priority: "high" },
-        apns: { payload: { aps: { sound: "default" } } },
+        notification: {title, body},
+        data: {type: "announcement", annId: event.params.annId},
+        android: {priority: "high"},
+        apns: {payload: {aps: {sound: "default"}}},
       });
       logger.info(`Announcement notification sent to topic: ${topic}`);
     } catch (err) {
@@ -64,12 +64,12 @@ export const onResultCreated = onDocumentCreated(
     try {
       await admin.messaging().send({
         topic,
-        notification: { 
-          title: "نتيجة جديدة", 
-          body: `تم رفع نتيجة جديدة لمادة ${subject}`
+        notification: {
+          title: "نتيجة جديدة",
+          body: `تم رفع نتيجة جديدة لمادة ${subject}`,
         },
-        data: { type: "result", resultId: event.params.resultId },
-        android: { priority: "high" },
+        data: {type: "result", resultId: event.params.resultId},
+        android: {priority: "high"},
       });
       logger.info(`Result notification sent to topic: ${topic}`);
     } catch (err) {
@@ -98,12 +98,12 @@ export const onScheduleCreated = onDocumentCreated(
     try {
       await admin.messaging().send({
         topic,
-        notification: { 
-          title: "جدول دراسي جديد", 
-          body: "تم نشر/تحديث الجدول الدراسي الخاص بمرحلتك"
+        notification: {
+          title: "جدول دراسي جديد",
+          body: "تم نشر/تحديث الجدول الدراسي الخاص بمرحلتك",
         },
-        data: { type: "schedule", scheduleId: event.params.scheduleId },
-        android: { priority: "high" },
+        data: {type: "schedule", scheduleId: event.params.scheduleId},
+        android: {priority: "high"},
       });
       logger.info(`Schedule notification sent to topic: ${topic}`);
     } catch (err) {
@@ -184,7 +184,7 @@ export const verifyUser = onCall(async (request) => {
     throw new HttpsError("permission-denied", "غير مصرح لك بهذه العملية");
   }
 
-  const { targetUid } = request.data as { targetUid: string };
+  const {targetUid} = request.data as { targetUid: string };
   if (!targetUid) {
     throw new HttpsError("invalid-argument", "targetUid مطلوب");
   }
@@ -204,7 +204,7 @@ export const verifyUser = onCall(async (request) => {
   });
 
   logger.info(`User ${targetUid} verified by ${callerUid}`);
-  return { success: true, message: "تم التحقق من المستخدم بنجاح" };
+  return {success: true, message: "تم التحقق من المستخدم بنجاح"};
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ export const sendUserNotification = onCall(async (request) => {
     throw new HttpsError("permission-denied", "غير مصرح لك بهذه العملية");
   }
 
-  const { targetUid, title, body } = request.data as {
+  const {targetUid, title, body} = request.data as {
     targetUid: string;
     title: string;
     body: string;
@@ -243,7 +243,7 @@ export const sendUserNotification = onCall(async (request) => {
   });
 
   logger.info(`Notification sent to ${targetUid} by ${request.auth.uid}`);
-  return { success: true };
+  return {success: true};
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -8,14 +8,21 @@ part of 'auth_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Firebase Auth instance provider.
+/// Use this to get the FirebaseAuth instance.
 
 @ProviderFor(firebaseAuth)
 final firebaseAuthProvider = FirebaseAuthProvider._();
+
+/// Firebase Auth instance provider.
+/// Use this to get the FirebaseAuth instance.
 
 final class FirebaseAuthProvider extends $FunctionalProvider<
     firebase_auth.FirebaseAuth,
     firebase_auth.FirebaseAuth,
     firebase_auth.FirebaseAuth> with $Provider<firebase_auth.FirebaseAuth> {
+  /// Firebase Auth instance provider.
+  /// Use this to get the FirebaseAuth instance.
   FirebaseAuthProvider._()
       : super(
           from: null,
@@ -52,13 +59,18 @@ final class FirebaseAuthProvider extends $FunctionalProvider<
 
 String _$firebaseAuthHash() => r'e323ea70909ff25727135fa5deddbce7cd1e9c07';
 
+/// Firebase Firestore instance provider.
+
 @ProviderFor(firebaseFirestore)
 final firebaseFirestoreProvider = FirebaseFirestoreProvider._();
+
+/// Firebase Firestore instance provider.
 
 final class FirebaseFirestoreProvider extends $FunctionalProvider<
     FirebaseFirestore,
     FirebaseFirestore,
     FirebaseFirestore> with $Provider<FirebaseFirestore> {
+  /// Firebase Firestore instance provider.
   FirebaseFirestoreProvider._()
       : super(
           from: null,
@@ -524,15 +536,30 @@ final class UpdateProfileUseCaseProvider extends $FunctionalProvider<
 String _$updateProfileUseCaseHash() =>
     r'924ba9735cc7d1efbeb4e7b50b2cbad7fadfe7ab';
 
-/// Authentication state notifier
+/// Authentication state notifier.
+///
+/// Handles user authentication state, including sign-in, registration,
+/// verification, and profile updates. Listens to Firebase auth state changes
+/// and automatically updates the state. Also ensures that each user has an
+/// RSA key pair for E2EE upon first login.
 
 @ProviderFor(AuthNotifier)
 final authProvider = AuthNotifierProvider._();
 
-/// Authentication state notifier
+/// Authentication state notifier.
+///
+/// Handles user authentication state, including sign-in, registration,
+/// verification, and profile updates. Listens to Firebase auth state changes
+/// and automatically updates the state. Also ensures that each user has an
+/// RSA key pair for E2EE upon first login.
 final class AuthNotifierProvider
     extends $AsyncNotifierProvider<AuthNotifier, AppUser?> {
-  /// Authentication state notifier
+  /// Authentication state notifier.
+  ///
+  /// Handles user authentication state, including sign-in, registration,
+  /// verification, and profile updates. Listens to Firebase auth state changes
+  /// and automatically updates the state. Also ensures that each user has an
+  /// RSA key pair for E2EE upon first login.
   AuthNotifierProvider._()
       : super(
           from: null,
@@ -552,9 +579,14 @@ final class AuthNotifierProvider
   AuthNotifier create() => AuthNotifier();
 }
 
-String _$authNotifierHash() => r'39390df4cf6420d0e8145f96505c599267c18a7a';
+String _$authNotifierHash() => r'5f63de3637f3f2da9a291138517be9d46fc92251';
 
-/// Authentication state notifier
+/// Authentication state notifier.
+///
+/// Handles user authentication state, including sign-in, registration,
+/// verification, and profile updates. Listens to Firebase auth state changes
+/// and automatically updates the state. Also ensures that each user has an
+/// RSA key pair for E2EE upon first login.
 
 abstract class _$AuthNotifier extends $AsyncNotifier<AppUser?> {
   FutureOr<AppUser?> build();
@@ -571,17 +603,17 @@ abstract class _$AuthNotifier extends $AsyncNotifier<AppUser?> {
   }
 }
 
-/// Stream of unverified users (admin)
+/// Stream of unverified users for admin use.
 
 @ProviderFor(unverifiedUsers)
 final unverifiedUsersProvider = UnverifiedUsersProvider._();
 
-/// Stream of unverified users (admin)
+/// Stream of unverified users for admin use.
 
 final class UnverifiedUsersProvider extends $FunctionalProvider<
         AsyncValue<List<AppUser>>, List<AppUser>, Stream<List<AppUser>>>
     with $FutureModifier<List<AppUser>>, $StreamProvider<List<AppUser>> {
-  /// Stream of unverified users (admin)
+  /// Stream of unverified users for admin use.
   UnverifiedUsersProvider._()
       : super(
           from: null,
@@ -610,17 +642,17 @@ final class UnverifiedUsersProvider extends $FunctionalProvider<
 
 String _$unverifiedUsersHash() => r'b7ddea8066cdb3a5a6ba9e524e4a6fefa613c85c';
 
-/// Current user provider (convenience)
+/// Convenience provider that returns the current user, or null if not logged in.
 
 @ProviderFor(currentUser)
 final currentUserProvider = CurrentUserProvider._();
 
-/// Current user provider (convenience)
+/// Convenience provider that returns the current user, or null if not logged in.
 
 final class CurrentUserProvider
     extends $FunctionalProvider<AppUser?, AppUser?, AppUser?>
     with $Provider<AppUser?> {
-  /// Current user provider (convenience)
+  /// Convenience provider that returns the current user, or null if not logged in.
   CurrentUserProvider._()
       : super(
           from: null,
@@ -656,16 +688,16 @@ final class CurrentUserProvider
 
 String _$currentUserHash() => r'066f03b83942d663e7abac349aa53fd6b76bb18e';
 
-/// Is user authenticated provider
+/// Whether the user is authenticated (logged in).
 
 @ProviderFor(isAuthenticated)
 final isAuthenticatedProvider = IsAuthenticatedProvider._();
 
-/// Is user authenticated provider
+/// Whether the user is authenticated (logged in).
 
 final class IsAuthenticatedProvider
     extends $FunctionalProvider<bool, bool, bool> with $Provider<bool> {
-  /// Is user authenticated provider
+  /// Whether the user is authenticated (logged in).
   IsAuthenticatedProvider._()
       : super(
           from: null,
@@ -701,16 +733,16 @@ final class IsAuthenticatedProvider
 
 String _$isAuthenticatedHash() => r'ec341d95b490bda54e8278477e26f7b345844931';
 
-/// Is user verified provider
+/// Whether the current user is verified (email or admin verification).
 
 @ProviderFor(isUserVerified)
 final isUserVerifiedProvider = IsUserVerifiedProvider._();
 
-/// Is user verified provider
+/// Whether the current user is verified (email or admin verification).
 
 final class IsUserVerifiedProvider extends $FunctionalProvider<bool, bool, bool>
     with $Provider<bool> {
-  /// Is user verified provider
+  /// Whether the current user is verified (email or admin verification).
   IsUserVerifiedProvider._()
       : super(
           from: null,

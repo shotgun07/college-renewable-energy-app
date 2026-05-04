@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user.dart';
 import '../../core/security/app_encryption_helper.dart';
 
-/// Data model for User - maps to/from Firestore
-/// Extends domain entity and adds serialization logic
+
 class UserModel extends User {
   const UserModel({
     required super.uid,
@@ -35,7 +34,6 @@ class UserModel extends User {
     super.lastLogin,
   });
 
-  /// Create UserModel from Firestore DocumentSnapshot
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
     if (data == null) {
@@ -75,7 +73,6 @@ class UserModel extends User {
     );
   }
 
-  /// Create UserModel from Map (for JSON/Cache)
   factory UserModel.fromMap(Map<String, dynamic> data) {
     return UserModel(
       uid: data['uid'],
@@ -115,7 +112,6 @@ class UserModel extends User {
     );
   }
 
-  /// Convert to Firestore map
   Map<String, dynamic> toFirestore() {
     return {
       'uid': uid,
@@ -151,7 +147,6 @@ class UserModel extends User {
     };
   }
 
-  /// Convert to Map for caching/JSON
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -185,7 +180,39 @@ class UserModel extends User {
     };
   }
 
-  /// Create User entity from domain entity (for conversions)
+
+  User toEntity() {
+    return User(
+      uid: uid,
+      fullName: fullName,
+      departmentName: departmentName,
+      semester: semester,
+      role: role,
+      phoneNumber: phoneNumber,
+      email: email,
+      nationalId: nationalId,
+      studentID: studentID,
+      city: city,
+      landmark: landmark,
+      biometricEnabled: biometricEnabled,
+      twoFactorEnabled: twoFactorEnabled,
+      profileImageUrl: profileImageUrl,
+      publicKey: publicKey,
+      specialization: specialization,
+      officeHours: officeHours,
+      bio: bio,
+      teachingKeys: teachingKeys,
+      emailVerified: emailVerified,
+      customVerified: customVerified,
+      requiresVerification: requiresVerification,
+      verificationRequestedAt: verificationRequestedAt,
+      lastVerificationReminderAt: lastVerificationReminderAt,
+      verifiedBy: verifiedBy,
+      verifiedAt: verifiedAt,
+      lastLogin: lastLogin,
+    );
+  }
+
   factory UserModel.fromEntity(User user) {
     return UserModel(
       uid: user.uid,
@@ -218,7 +245,6 @@ class UserModel extends User {
     );
   }
 
-  // Helper methods
   static UserRole _roleFrom(dynamic value) {
     final v = (value ?? '').toString().trim().toLowerCase();
     if (v == 'admin') return UserRole.admin;

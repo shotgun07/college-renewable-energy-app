@@ -38,7 +38,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "???? ???????...",
+                      "جارٍ الاتصال...",
                       style: TextStyle(color: Colors.white54, fontSize: 16),
                     ),
                   ],

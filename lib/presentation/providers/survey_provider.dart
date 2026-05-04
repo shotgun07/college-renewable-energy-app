@@ -36,7 +36,7 @@ class SurveyNotifier extends _$SurveyNotifier {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final user = ref.read(currentUserProvider);
-      if (user == null) throw Exception('يجب تسجيل الدخول لإرسال تقييم');
+      if (user == null) throw Exception('ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„Ø¥Ø±Ø³Ø§Ù„ ØªÙ‚ÙŠÙŠÙ…');
 
       final survey = Survey(
         id: const Uuid().v4(),

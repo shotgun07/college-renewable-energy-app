@@ -1,11 +1,10 @@
 import '../security/app_encryption_helper.dart';
-
-enum UserRole { student, teacher, supervisor, admin }
+import '../constants/app_enums.dart';
 
 class AppUser {
   final String uid;
   final String fullName;
-  final String departmentName;
+  final Department department;
   final int semester;
   final UserRole role;
 
@@ -24,7 +23,7 @@ class AppUser {
   AppUser({
     required this.uid,
     required this.fullName,
-    required this.departmentName,
+    required this.department,
     required this.semester,
     required this.role,
     required this.phoneNumber,
@@ -55,8 +54,7 @@ class AppUser {
       email: d['email']?.toString(),
       nationalId: AppEncryptionHelper.decrypt((d['nationalId'] ?? '').toString().trim()),
       studentID: AppEncryptionHelper.decrypt((d['studentID'] ?? '').toString().trim()),
-      departmentName: (d['departmentName'] ?? d['department'] ?? 'عام')
-          .toString(),
+      department: Department.fromString(d['departmentName'] ?? d['department']),
       semester: _parseInt(d['semester'], fallback: 1),
       role: roleFrom(d['role']),
       city: d['city']?.toString(),
@@ -75,7 +73,7 @@ class AppUser {
       'email': email,
       'nationalId': AppEncryptionHelper.encrypt(nationalId),
       'studentID': AppEncryptionHelper.encrypt(studentID),
-      'departmentName': departmentName,
+      'departmentName': department.displayName,
       'semester': semester,
       'role': role.name,
       'city': city,

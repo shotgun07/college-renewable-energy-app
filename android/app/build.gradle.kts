@@ -1,4 +1,7 @@
-@file:Suppress("DEPRECATION")
+import java.util.Properties
+import java.io.FileInputStream
+
+
 
 plugins {
     id("com.android.application")
@@ -10,7 +13,7 @@ plugins {
 android {
     namespace = "com.collegeRenewableEnergy.app"
     compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "30.0.14904198"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -22,6 +25,7 @@ android {
         jvmTarget = "11"
     }
 
+
     defaultConfig {
         applicationId = "com.collegeRenewableEnergy.app"
         minSdk = flutter.minSdkVersion
@@ -31,9 +35,25 @@ android {
         multiDexEnabled = true
     }
 
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
+            keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
+            val storeFilePathStr = keystoreProperties.getProperty("storeFile")
+            storeFile = if (storeFilePathStr != null) file(storeFilePathStr) else null
+            storePassword = keystoreProperties.getProperty("storePassword") ?: ""
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -50,7 +70,4 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
-    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
 }

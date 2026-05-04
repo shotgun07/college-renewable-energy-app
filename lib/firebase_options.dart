@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -27,6 +28,7 @@ class DefaultFirebaseOptions {
         );
     }
   }
+
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDiV8B8OB_WHSuUfMEJ4T05TSIOnBH4b3Q',
@@ -77,5 +79,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'renewable-energy-college-app.firebasestorage.app',
     measurementId: 'G-M455LJ6K8Z',
   );
-
 }

@@ -20,8 +20,7 @@ class FeedbackRepository {
     }
 
     return query.snapshots().map((snapshot) {
-      // Note: By default snapshots handle offline implicitly when persistence is enabled.
-      // But we can still ensure it behaves reasonably if explicitly requested.
+
       return snapshot.docs.map((doc) => 
         FeedbackModel.fromMap(doc.id, doc.data() as Map<String, dynamic>)
       ).toList();

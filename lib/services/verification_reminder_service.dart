@@ -1,76 +1,46 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
-/// Service to manage verification reminders for unverified users
 class VerificationReminderService {
-  static const String _lastDismissedKey =
-      'verification_reminder_last_dismissed';
-  static const String _dismissCountKey = 'verification_reminder_dismiss_count';
+  static const String _lastReminderKey = 'last_verification_reminder_time';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Duration to wait before showing reminder again after dismissal
-  /// Starts at 1 day, increases with each dismissal
-  Duration _getReminderInterval(int dismissCount) {
-    if (dismissCount == 0) {
-      return const Duration(hours: 1); // Show after 1 hour initially
-    } else if (dismissCount == 1) {
-      return const Duration(days: 1); // Then daily
-    } else if (dismissCount < 5) {
-      return const Duration(days: 3); // Then every 3 days
-    } else {
-      return const Duration(days: 7); // Then weekly
+  /// Checks if the verification reminder should be shown.
+  Future<bool> shouldShowReminder(String userID) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final int? lastShown = prefs.getInt(_lastReminderKey);
+      
+      if (lastShown == null) return true;
+
+      final DateTime lastDate = DateTime.fromMillisecondsSinceEpoch(lastShown);
+      final DateTime now = DateTime.now();
+      
+      // Remind every 24 hours
+      return now.difference(lastDate).inHours >= 24;
+    } catch (e) {
+      debugPrint('Error checking reminder status: $e');
+      return false;
     }
   }
 
-  /// Check if reminder should be shown to the user
-  Future<bool> shouldShowReminder(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
+  /// Marks the reminder as shown in local storage.
+  Future<void> markReminderShown() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_lastReminderKey, DateTime.now().millisecondsSinceEpoch);
+  }
 
-    final lastDismissedStr = prefs.getString('${_lastDismissedKey}_$userId');
-    if (lastDismissedStr == null) {
-      // Never dismissed, show reminder
-      return true;
+  /// Updates Firestore to acknowledge the reminder dismissal.
+  Future<void> dismissReminder(String userID) async {
+    try {
+      await _firestore.collection('users').doc(userID).update({
+        'verificationReminderDismissed': true,
+        'lastReminderDismissedAt': FieldValue.serverTimestamp(),
+      });
+      await markReminderShown();
+    } catch (e) {
+      debugPrint('Error dismissing reminder: $e');
     }
-
-    final lastDismissed = DateTime.parse(lastDismissedStr);
-    final dismissCount = prefs.getInt('${_dismissCountKey}_$userId') ?? 0;
-    final interval = _getReminderInterval(dismissCount);
-
-    final nextReminderTime = lastDismissed.add(interval);
-    final now = DateTime.now();
-
-    // Show if we've passed the next reminder time
-    return now.isAfter(nextReminderTime);
-  }
-
-  /// Mark reminder as dismissed by user
-  Future<void> dismissReminder(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Record dismissal time
-    await prefs.setString(
-        '${_lastDismissedKey}_$userId', DateTime.now().toIso8601String());
-
-    // Increment dismiss count
-    final currentCount = prefs.getInt('${_dismissCountKey}_$userId') ?? 0;
-    await prefs.setInt('${_dismissCountKey}_$userId', currentCount + 1);
-  }
-
-  /// Clear reminder state (called when user verifies email)
-  Future<void> clearReminderState(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('${_lastDismissedKey}_$userId');
-    await prefs.remove('${_dismissCountKey}_$userId');
-  }
-
-  /// Get the current dismiss count for analytics
-  Future<int> getDismissCount(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('${_dismissCountKey}_$userId') ?? 0;
-  }
-
-  /// Force show reminder (called by admin or for important updates)
-  Future<void> forceShowReminder(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('${_lastDismissedKey}_$userId');
-    // Keep dismiss count to maintain interval logic
   }
 }

@@ -89,7 +89,7 @@ class _StudentViewAnnouncementsState extends ConsumerState<StudentViewAnnounceme
     // Handle user loading/null state
     if (userAsync == null) {
       return const StudentScaffold(
-        title: '??????? ??????',
+        title: 'الإعلانات الرسمية',
         isLoading: true,
         body: Center(
           child: CircularProgressIndicator(color: Colors.white),
@@ -102,7 +102,7 @@ class _StudentViewAnnouncementsState extends ConsumerState<StudentViewAnnounceme
     );
 
     return StudentScaffold(
-      title: '??????? ??????',
+      title: 'الإعلانات الرسمية',
       isLoading: false,
       body: announcementsAsync.when(
         data: (announcements) {
@@ -115,7 +115,7 @@ class _StudentViewAnnouncementsState extends ConsumerState<StudentViewAnnounceme
                       size: 60, color: Colors.white.withValues(alpha: 0.2)),
                   const SizedBox(height: 15),
                   Text(
-                    "?? ???? ??????? ??????",
+                    "لا توجد إعلانات حالياً",
                     style:
                         TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                   ),
@@ -168,9 +168,30 @@ class _StudentViewAnnouncementsState extends ConsumerState<StudentViewAnnounceme
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.white),
                     ),
-                    subtitle: Text("???? ??: ${announcement.department}",
-                        style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6))),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("صادر من: ${announcement.department}",
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 12)),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(Icons.access_time,
+                                size: 12,
+                                color: Colors.white.withValues(alpha: 0.4)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDate(announcement.createdAt),
+                              style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                     iconColor: Colors.white,
                     collapsedIconColor: Colors.white70,
                     children: [
@@ -199,9 +220,19 @@ class _StudentViewAnnouncementsState extends ConsumerState<StudentViewAnnounceme
             const Center(child: CircularProgressIndicator(color: Colors.white)),
         error: (e, st) => Center(
           child:
-              Text("??? ???: $e", style: const TextStyle(color: Colors.white)),
+              Text("حدث خطأ: $e", style: const TextStyle(color: Colors.white)),
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour = date.hour.toString().padLeft(2, '0');
+    final min = date.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year  $hour:$min';
   }
 }

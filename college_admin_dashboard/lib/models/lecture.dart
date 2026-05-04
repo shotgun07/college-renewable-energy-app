@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/app_enums.dart';
 
 class Lecture {
   final String id;
   final String title;
   final String subject;
-  final String department;
+  final Department department;
   final int semester;
   final String teacherId;
   final String teacherName;
@@ -28,7 +29,7 @@ class Lecture {
       id: id,
       title: (map['title'] ?? 'بدون عنوان').toString(),
       subject: (map['subject'] ?? '').toString(),
-      department: (map['department'] ?? '').toString(),
+      department: Department.fromString(map['department']?.toString()),
       semester: int.tryParse((map['semester'] ?? '1').toString()) ?? 1,
       teacherId: (map['teacherId'] ?? '').toString(),
       teacherName: (map['teacherName'] ?? '').toString(),
@@ -41,7 +42,7 @@ class Lecture {
     return {
       'title': title,
       'subject': subject,
-      'department': department,
+      'department': department.displayName,
       'semester': semester,
       'teacherId': teacherId,
       'teacherName': teacherName,

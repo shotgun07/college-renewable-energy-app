@@ -3,25 +3,49 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, PlatformDispatcher;
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/legacy.dart' as riverpod
     show ChangeNotifierProvider;
 
 import 'firebase_options.dart';
 import 'providers/theme_provider.dart';
 import 'models/app_user.dart';
+import 'constants/app_enums.dart'; 
 import 'ui/auth/admin_login_screen.dart';
 import 'ui/screens/main_screen.dart';
+import 'ui/widgets/connectivity_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Enable Firestore offline persistence
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
+  if (!kIsWeb) {
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
+
+  // Configure Firestore persistence: disable on web to avoid exclusive access
+  // errors in multi-tab/dev server environments.
+  if (kIsWeb) {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: false,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  } else {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  }
 
   runApp(
     const riverpod.ProviderScope(
@@ -42,13 +66,26 @@ class AdminDashboardApp extends riverpod.ConsumerWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'لوحة إدارة الكلية',
-      theme: theme.lightTheme,
-      darkTheme: theme.darkTheme,
+      theme: theme.lightTheme.copyWith(
+        textTheme: GoogleFonts.cairoTextTheme(theme.lightTheme.textTheme),
+      ),
+      darkTheme: theme.darkTheme.copyWith(
+        textTheme: GoogleFonts.cairoTextTheme(theme.darkTheme.textTheme),
+      ),
       themeMode: theme.themeMode,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ar', 'AE'),
+      ],
+      locale: const Locale('ar', 'AE'),
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: child ?? const SizedBox.shrink(),
+          child: ConnectivityWrapper(child: child ?? const SizedBox.shrink()),
         );
       },
       home: const AdminAuthGate(),

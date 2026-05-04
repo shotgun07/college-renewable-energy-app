@@ -4,6 +4,8 @@ import '../../widgets/student/student_scaffold.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/chat_provider.dart';
 import '../../../services/chat_service.dart';
+import 'package:intl/intl.dart';
+import '../../widgets/verification_banner_widget.dart';
 
 class StudentAdminChat extends ConsumerStatefulWidget {
   const StudentAdminChat({super.key});
@@ -19,6 +21,7 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
   String _uid = '';
   bool _ready = false;
   String _threadId = '';
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -31,10 +34,10 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
     if (user == null) return;
 
     _uid = user.uid;
-    _threadId = await _chat.adminThreadIdForStudent(_uid);
+    _threadId = (await _chat.adminThreadIdForStudent(_uid)) ?? 'admin_$_uid';
 
-    final name = user.fullName.isEmpty ? '????' : user.fullName;
-    final dept = user.departmentName.isEmpty ? '???' : user.departmentName;
+    final name = user.fullName.isEmpty ? 'طالب' : user.fullName;
+    final dept = user.departmentName.isEmpty ? 'عام' : user.departmentName;
     final studentId = user.studentID.trim();
     final semester = user.semester;
 
@@ -65,21 +68,32 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
     final msg = _text.text.trim();
     if (msg.isEmpty) return;
 
+    final originalText = _text.text;
     _text.clear();
 
-    await _chat.sendMessage(
-      threadId: _threadId,
-      text: msg,
-      senderId: user.uid,
-      senderRole: 'student',
-    );
+    try {
+      await _chat.sendMessage(
+        threadId: _threadId,
+        text: msg,
+        senderId: user.uid,
+        senderRole: 'student',
+      );
 
-    await _chat.markRead(threadId: _threadId, uid: user.uid);
+      await _chat.markRead(threadId: _threadId, uid: user.uid);
+    } catch (e) {
+      if (mounted) {
+        _text.text = originalText; // Restore on error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل إرسال الرسالة: $e')),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
     _text.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -87,18 +101,33 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
   Widget build(BuildContext context) {
     if (!_ready) {
       return const StudentScaffold(
-        title: '?????? ???????',
+        title: 'دعم الإدارة',
         isLoading: true,
         body: SizedBox(),
       );
     }
 
+    final user = ref.watch(currentUserProvider);
     final messagesAsync = ref.watch(threadMessagesProvider(_threadId));
 
+    // Auto-scroll on new messages
+    ref.listen(threadMessagesProvider(_threadId), (prev, next) {
+      if (next is AsyncData && next.value!.isNotEmpty) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      }
+    });
+
     return StudentScaffold(
-      title: '?????? ???????',
+      title: 'دعم الإدارة',
       body: Column(
         children: [
+          if (user != null) VerificationBannerWidget(userId: user.uid),
           Expanded(
             child: messagesAsync.when(
               data: (messages) {
@@ -111,7 +140,7 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
                             size: 60,
                             color: Colors.white.withValues(alpha: 0.3)),
                         const SizedBox(height: 10),
-                        Text('????? ?? ??????? ??????',
+                        Text('ابدأ التواصل مع الإدارة الآن',
                             style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5))),
                       ],
@@ -120,6 +149,7 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
                 }
 
                 return ListView.builder(
+                  controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.all(20),
                   itemCount: messages.length,
@@ -152,10 +182,23 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
                                 : Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
-                        child: Text(
-                          msg.text,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
+                        child: Column(
+                          crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              msg.text,
+                              style: const TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('hh:mm a').format(msg.createdAt),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: mine ? Colors.white70 : Colors.white60,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -165,7 +208,7 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
               loading: () => const Center(
                   child: CircularProgressIndicator(color: Colors.white)),
               error: (error, _) => Center(
-                child: Text('???: $error',
+                child: Text('حدث خطأ: $error',
                     style: const TextStyle(color: Colors.redAccent)),
               ),
             ),
@@ -187,7 +230,7 @@ class _StudentAdminChatState extends ConsumerState<StudentAdminChat> {
                     style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.right,
                     decoration: InputDecoration(
-                      hintText: '???? ?????? ???????...',
+                       hintText: 'اكتب رسالتك للإدارة...',
                       hintStyle:
                           TextStyle(color: Colors.white.withValues(alpha: 0.4)),
                       filled: true,

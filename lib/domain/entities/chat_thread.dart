@@ -1,14 +1,14 @@
 class ChatThread {
   final String id;
-  final String type; // 'student_teacher', 'admin_user', etc.
+  final String type; 
   final List<String> participants;
-  final Map<String, dynamic> meta; // department, names, etc.
+  final Map<String, dynamic> meta;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String lastMessage;
   final String lastSenderUid;
   final String lastSenderRole;
-  final Map<String, DateTime> readStatus; // uid -> last read time
+  final Map<String, DateTime> readStatus;
 
   const ChatThread({
     required this.id,

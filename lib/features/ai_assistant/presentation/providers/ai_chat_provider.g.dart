@@ -48,7 +48,7 @@ final class AiRepositoryProvider
   }
 }
 
-String _$aiRepositoryHash() => r'5211435f31a5229a2af8bcbd6d78663506c6e20f';
+String _$aiRepositoryHash() => r'b9277a8a9166ebf8a20afc8e6312fe3f963378f8';
 
 @ProviderFor(AiChatNotifier)
 final aiChatProvider = AiChatNotifierProvider._();

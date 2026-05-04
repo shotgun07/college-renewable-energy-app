@@ -197,7 +197,7 @@ class _EmailWaitingScreenState extends State<EmailWaitingScreen> {
     if (user == null || !mounted) return;
 
     final doc = await _authService.getUserData(user.uid);
-    final role = doc.data()?['role']?.toString().toLowerCase();
+    final role = doc?['role']?.toString().toLowerCase();
 
     if (!mounted) return;
     Navigator.pushReplacement(

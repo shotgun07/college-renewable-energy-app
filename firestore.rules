@@ -63,6 +63,11 @@ service cloud.firestore {
              incomingData()[field] <= max;
     }
 
+    function isValidSemesterForDept(deptName, sem) {
+      return (deptName == 'القسم العام' && sem >= 1 && sem <= 2) ||
+             (deptName != 'القسم العام' && sem >= 3 && sem <= 8);
+    }
+
     match /users/{userId} {
       allow get: if isSignedIn() && (
         isSameUser(userId) || 
@@ -78,18 +83,23 @@ service cloud.firestore {
                     incomingData().role == 'student' && 
                     incomingData().uid == getAuthUid() &&
                     validateString('fullName', 3, 50) &&
-                    validateString('departmentName', 2, 50);
+                    validateString('departmentName', 2, 50) &&
+                    isValidSemesterForDept(incomingData().departmentName, incomingData().get('semester', 1)) &&
+                    (!('customVerified' in incomingData()) || incomingData().customVerified == false);
 
       allow update: if isSignedIn() && (
         // Users can update their own data but NOT verification status
         (isSameUser(userId) && 
          incomingData().role == existingData().role && 
          incomingData().uid == existingData().uid &&
+         isValidSemesterForDept(incomingData().departmentName, incomingData().get('semester', 1)) &&
          // Prevent self-verification
-         incomingData().customVerified == existingData().customVerified &&
-         incomingData().verifiedBy == existingData().verifiedBy) || 
+         incomingData().get('customVerified', false) == existingData().get('customVerified', false) &&
+         incomingData().get('verifiedBy', '') == existingData().get('verifiedBy', '')) || 
         // Admins can update everything including verification
-        isGlobalAdmin()
+        isGlobalAdmin() ||
+        // Supervisors can update students in their dept
+        (roleIs('supervisor') && deptIs(existingData().departmentName) && isValidSemesterForDept(incomingData().departmentName, incomingData().get('semester', 1)))
       );
 
       allow delete: if isGlobalAdmin();
@@ -245,8 +255,7 @@ service cloud.firestore {
         isDeptSupervisor(incomingData().departmentName) || 
         isGlobalAdmin()
       ) &&
-      validateString('content', 5, 5000) &&
-      incomingData().priority in ['low', 'medium', 'high'];
+      validateString('body', 5, 5000);
 
       allow update: if isSignedIn() && (
         isGlobalAdmin() || 
@@ -260,6 +269,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       
       allow create, update, delete: if isGlobalAdmin();
+    }
+
+    match /courses/{courseId} {
+      allow get: if isSignedIn() && (deptIs(existingData().departmentName) || isGlobalAdmin());
+      allow list: if isSignedIn() && (deptIs(existingData().departmentName) || isGlobalAdmin() || (roleIs('student') && deptIs(existingData().departmentName)));
+      allow create, update: if isSignedIn() && (isGlobalAdmin() || isDeptSupervisor(incomingData().departmentName));
+      allow delete: if isGlobalAdmin() || isDeptSupervisor(existingData().departmentName);
     }
 
     match /audit_logs/{logId} {
@@ -309,10 +325,6 @@ service cloud.firestore {
       match /messages/{param} {
          allow read, write: if isSignedIn() && (getAuthUid() in get(/databases/$(database)/documents/threads/$(threadId)).data.participants || isGlobalAdmin());
       }
-    }
-
-    match /{allPaths=**} {
-      allow read, write: if isGlobalAdmin();
     }
 
   }

@@ -25,13 +25,13 @@ class SelectTeacherScreen extends ConsumerWidget {
     final teachersAsync = ref.watch(teachersByKeyProvider(key));
 
     return StudentScaffold(
-      title: '???? ???????',
+      title: 'اختيار أستاذ',
       body: teachersAsync.when(
         data: (teachers) {
           if (teachers.isEmpty) {
             return const Center(
               child: Text(
-                '?? ???? ?????? ?????? ?????? ???? ????? ??????',
+                'لا يوجد أساتذة متاحون لهذا القسم في الوقت الحالي',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70),
               ),
@@ -45,7 +45,7 @@ class SelectTeacherScreen extends ConsumerWidget {
               final t = teachers[index];
               return GlassTile(
                 title: t.fullName,
-                subtitle: '????? ?????? ?? ???????',
+                subtitle: 'أستاذ محاضر في القسم',
                 icon: Icons.person,
                 color: Colors.tealAccent,
                 onTap: () async {
@@ -81,7 +81,7 @@ class SelectTeacherScreen extends ConsumerWidget {
         loading: () => const Center(
             child: CircularProgressIndicator(color: Colors.white)),
         error: (error, _) => Center(
-          child: Text('???: $error',
+          child: Text('خطأ: $error',
               style: const TextStyle(color: Colors.redAccent)),
         ),
       ),

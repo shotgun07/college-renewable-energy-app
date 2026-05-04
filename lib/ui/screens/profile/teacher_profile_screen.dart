@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../widgets/teacher/teacher_scaffold.dart';
@@ -32,7 +31,7 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("?? ????? ?????? ??????? ?????")),
+          const SnackBar(content: Text("تم تحديث صورة الملف الشخصي بنجاح")),
         );
       }
     }
@@ -44,27 +43,27 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
 
     return authState.when(
       loading: () => const TeacherScaffold(
-        title: "???? ??????",
+        title: "الملف الشخصي",
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       ),
       error: (e, st) => TeacherScaffold(
-        title: "???? ??????",
+        title: "الملف الشخصي",
         body: Center(
-            child: Text("???? ??? ????????: \$e",
+            child: Text("حدث خطأ غير متوقع: \$e",
                 style: const TextStyle(color: Colors.white))),
       ),
       data: (user) {
         if (user == null) {
           return const TeacherScaffold(
-            title: "???? ??????",
+            title: "الملف الشخصي",
             body: Center(
-                child: Text("??? ????? ?????? ?????",
+                child: Text("يرجى تسجيل الدخول أولاً",
                     style: TextStyle(color: Colors.white))),
           );
         }
 
         final fullName = user.fullName;
-        final email = user.email ?? '??? ?????';
+        final email = user.email ?? 'لا يوجد';
         final phone = user.phoneNumber;
         final dept = user.departmentName;
         final role = user.role.name;
@@ -73,11 +72,11 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
 
         // Check for real email
         final bool hasRealEmail = email.isNotEmpty &&
-            email != '??? ?????' &&
+            email != 'لا يوجد' &&
             !email.endsWith('@college.edu.ly');
 
         return TeacherScaffold(
-          title: "???? ??????",
+          title: "الملف الشخصي",
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -152,16 +151,20 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                 const SizedBox(height: 30),
                 if (hasRealEmail)
                   _buildProfileItem(
-                      "?????? ??????????", email, Icons.email_outlined),
+                      "البريد الإلكتروني", email, Icons.email_outlined),
                 _buildProfileItem(
-                    "??? ??????",
-                    phone.isEmpty ? "??? ????" : phone,
+                    "رقم الهاتف",
+                    phone.isEmpty ? "غير مسجل" : phone,
                     Icons.phone_android_outlined),
-                _buildProfileItem("????? ??????", dept, Icons.school_outlined),
+                _buildProfileItem("القسم الأكاديمي", dept, Icons.school_outlined),
+                if (user.specialization != null && user.specialization!.isNotEmpty)
+                  _buildProfileItem("التخصص", user.specialization!, Icons.workspace_premium_outlined),
+                if (user.bio != null && user.bio!.isNotEmpty)
+                  _buildProfileItem("نبذة شخصية", user.bio!, Icons.info_outline),
                 const SizedBox(height: 30),
                 const Align(
                   alignment: Alignment.centerRight,
-                  child: Text("??????? ??????",
+                  child: Text("إعدادات الأمان",
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -169,8 +172,8 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                 ),
                 const SizedBox(height: 15),
                 _buildSecurityToggle(
-                  "???????? ???????? (2FA)",
-                  "????? ?????? ??????? ??? ??????",
+                  "التحقق بخطوتين (2FA)",
+                  "حماية الحساب بكلمة مرور إضافية عند الدخول",
                   twoFactorEnabled,
                   (val) async {
                     await ref
@@ -180,12 +183,12 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                 ),
                 const SizedBox(height: 30),
                 _buildActionTile(
-                  "????? ???????? ???????",
+                  "تعديل المعلومات الشخصية",
                   Icons.edit_note_outlined,
                   () => _showEditInfoDialog(context, user),
                 ),
                 _buildActionTile(
-                  "????? ???? ??????",
+                  "تغيير كلمة المرور",
                   Icons.lock_outline,
                   () => _showChangePasswordDialog(context),
                 ),
@@ -211,7 +214,7 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                       }
                     },
                     icon: const Icon(Icons.logout, color: Colors.white),
-                    label: const Text("????? ??????",
+                    label: const Text("تسجيل الخروج",
                         style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -233,13 +236,13 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
   String _translateRole(String role) {
     switch (role.toLowerCase()) {
       case 'student':
-        return '????';
+        return 'طالب';
       case 'teacher':
-        return '???? / ??? ???? ?????';
+        return 'أستاذ / عضو هيئة التدريس';
       case 'admin':
-        return '???? ???';
+        return 'مدير النظام';
       case 'supervisor':
-        return '???? ???';
+        return 'مشرف أكاديمي';
       default:
         return role;
     }
@@ -331,38 +334,37 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text("????? ???? ??????",
+        title: const Text("تغيير كلمة المرور",
             style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
-            labelText: "???? ?????? ???????",
+            labelText: "كلمة المرور الجديدة",
             labelStyle: TextStyle(color: Colors.white70),
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("?????")),
+              child: const Text("إلغاء")),
           ElevatedButton(
             onPressed: () async {
               try {
-                await FirebaseAuth.instance.currentUser
-                    ?.updatePassword(controller.text);
+                await ref.read(authProvider.notifier).updatePassword(controller.text);
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("?? ??????? ?????")));
+                    const SnackBar(content: Text("تم تغيير كلمة المرور بنجاح")));
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text("???: $e")));
+                      .showSnackBar(SnackBar(content: Text("خطأ: $e")));
                 }
               }
             },
-            child: const Text("???"),
+            child: const Text("حفظ"),
           ),
         ],
       ),
@@ -380,22 +382,22 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text("????? ????????? ???????",
+        title: const Text("تعديل المعلومات الشخصية",
             style: TextStyle(color: Colors.white)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildEditField(specController, "??????"),
-              _buildEditField(hoursController, "??????? ????????"),
-              _buildEditField(bioController, "?????? ???????", maxLines: 3),
+              _buildEditField(specController, "التخصص"),
+              _buildEditField(hoursController, "ساعات المكتب"),
+              _buildEditField(bioController, "نبذة شخصية", maxLines: 3),
             ],
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("?????")),
+              child: const Text("إلغاء")),
           ElevatedButton(
             onPressed: () async {
               try {
@@ -408,15 +410,15 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("?? ??????? ?????")));
+                    const SnackBar(content: Text("تم حفظ التغييرات بنجاح")));
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text("???: $e")));
+                      .showSnackBar(SnackBar(content: Text("خطأ: $e")));
                 }
               }
             },
-            child: const Text("???"),
+            child: const Text("حفظ"),
           ),
         ],
       ),

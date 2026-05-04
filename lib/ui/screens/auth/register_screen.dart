@@ -28,20 +28,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isLoading = false;
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
-
   String? _selectedDept;
   String? _selectedSemester;
-  final List<String> _departments = ['???', '????', 'ICT', '????'];
+
+  // 1. تحديث أسماء الأقسام حسب النظام الأكاديمي الحقيقي
+  final List<String> _departments = [
+    'القسم العام',
+    'هندسة علوم بيئة',
+    'هندسة طاقة',
+    'ICT'
+  ];
 
   final Map<int, String> _semesterMap = {
-    1: "????? ?????",
-    2: "????? ??????",
-    3: "????? ??????",
-    4: "????? ??????",
-    5: "????? ??????",
-    6: "????? ??????",
-    7: "????? ??????",
-    8: "????? ??????",
+    1: "الفصل الأول",
+    2: "الفصل الثاني",
+    3: "الفصل الثالث",
+    4: "الفصل الرابع",
+    5: "الفصل الخامس",
+    6: "الفصل السادس",
+    7: "الفصل السابع",
+    8: "الفصل الثامن",
   };
 
   void _generateStrongPassword() {
@@ -78,7 +84,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          "?? ?? ????? ???? ???? ????.. ?? ???? ???? ??? ??? ?? ???? ???!",
+          "تم توليد كلمة مرور قوية.. يرجى حفظها في مكان آمن!",
           textAlign: TextAlign.right,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -93,17 +99,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       Clipboard.setData(ClipboardData(text: _passwordController.text));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("?? ??? ???? ??????"), backgroundColor: Colors.green),
+          content: Text("تم نسخ كلمة المرور", textAlign: TextAlign.right),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
 
+  // 2. تطوير المنطق الأكاديمي لعرض الفصول بناءً على القسم
   List<String> _getSemesters() {
     List<int> numbers = [];
-    if (_selectedDept == '???') {
-      numbers = [1, 2];
+    if (_selectedDept == 'القسم العام') {
+      numbers = [1, 2]; // القسم العام فيه فصل أول وثاني فقط
     } else if (_selectedDept != null) {
-      numbers = [3, 4, 5, 6, 7, 8];
+      numbers = [3, 4, 5, 6, 7, 8]; // باقي التخصصات تبدأ من الفصل الثالث للثامن
     }
     return numbers.map((n) => _semesterMap[n]!).toList();
   }
@@ -123,28 +132,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (!_isPasswordStrong(_passwordController.text)) {
       _showError(
-          "???? ???? ?????! ??? ?? ????? ??? ???? ????? ?????? ?????? ????? ?????? 8 ????? ??? ?????");
+          "كلمة المرور ضعيفة! يجب أن تتكون من 8 أحرف وتحتوي على حرف كبير وصغير ورقم ورمز.");
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showError("????? ???? ??? ?????????");
+      _showError("كلمتا المرور غير متطابقتين");
       return;
     }
 
     if (_selectedDept == null || _selectedSemester == null) {
-      _showError("?????? ?????? ????? ?????? ???????");
+      _showError("الرجاء اختيار القسم والفصل الدراسي");
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // TODO: RE-ENABLE OTP � Change kOtpEnabled to true to restore phone verification
     const bool kOtpEnabled = false;
 
-    // Use a variable explicitly to avoid constant false dead code path during analysis
     if (kOtpEnabled == true) {
-      // ---- Original OTP flow (preserved for re-enablement) ----
       try {
         final phoneService = TwoFactorService();
         final formattedPhone =
@@ -171,54 +177,61 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           onVerificationFailed: (e) {
             if (mounted) {
               setState(() => _isLoading = false);
-              _showError("??? ????? ?????: ${e.message}");
+              _showError("فشل التحقق من الهاتف: ${e.message}");
             }
           },
         );
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
-          _showError("??? ??? ??? ?????");
+          _showError("حدث خطأ أثناء الاتصال بالخادم");
         }
       }
     } else {
-      // ---- Bypass: Register directly with email/password (OTP disabled) ----
       await _completeRegistrationDirect();
     }
   }
 
-  /// Used when OTP is enabled � verifies phone then creates account
   Future<void> _completeRegistration(String otp, String verificationId) async {
     try {
-      // For now, OTP flow is disabled. Refactoring specific Firebase PhoneAuth 
-      // is deferred until OTP is re-enabled but we will just emit a message.
-      _showError("OTP verification is currently unsupported in this architecture.");
+      _showError("خدمة الـ OTP غير مدعومة حالياً.");
       setState(() => _isLoading = false);
     } catch (e) {
-      _showError("??? ??????: $e");
+      _showError("حدث خطأ: $e");
       setState(() => _isLoading = false);
     }
   }
 
-  /// Used when OTP is disabled � registers directly with email/password
-  /// TODO: RE-ENABLE OTP � Remove this method when kOtpEnabled = true
   Future<void> _completeRegistrationDirect() async {
     try {
-      final email = _emailController.text.trim();
+      String email = _emailController.text.trim();
+      final phone = _phoneController.text.trim();
+
       if (email.isEmpty) {
-        setState(() => _isLoading = false);
-        _showError("?????? ?????????? ????? ??????? ???? OTP");
-        return;
+        if (phone.isEmpty || phone.length < 9) {
+          setState(() => _isLoading = false);
+          _showError("يرجى إدخال رقم هاتف صحيح");
+          return;
+        }
+        email = "$phone@rec.edu.ly";
       }
+
+      // تحويل النص (الفصل الثالث) إلى رقم (3) ليتناسب مع قواعد البيانات
+      int semesterNumber = 1;
+      _semesterMap.forEach((key, value) {
+        if (value == _selectedSemester) {
+          semesterNumber = key;
+        }
+      });
 
       final userData = {
         'fullName': _nameController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(),
+        'phoneNumber': phone,
         'personalEmail': email,
         'nationalId': _nationalIdController.text.trim(),
         'studentID': '',
         'departmentName': _selectedDept,
-        'semester': _selectedSemester,
+        'semester': semesterNumber,
         'city': _cityController.text.trim(),
         'landmark': _landmarkController.text.trim(),
         'role': 'student',
@@ -232,17 +245,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
 
       if (!mounted) return;
-      
+
       final authState = ref.read(authProvider);
+
       if (authState.hasError) {
         setState(() => _isLoading = false);
-        _showError("??? ????? ??????: ${authState.error}");
+        String errorMsg = authState.error.toString();
+        if (errorMsg.contains('email-already-in-use')) {
+          _showError("رقم الهاتف أو البريد مسجل مسبقاً، يرجى تسجيل الدخول.");
+        } else if (errorMsg.contains('invalid-email')) {
+          _showError("صيغة البريد الإلكتروني غير صالحة.");
+        } else {
+          _showError("حدث خطأ في التسجيل: تأكد من صحة البيانات.");
+        }
         return;
       }
 
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('?? ????? ?????? ?????!')));
+        const SnackBar(
+          content: Text('تم إنشاء الحساب بنجاح!', textAlign: TextAlign.right),
+          backgroundColor: Colors.green,
+        ),
+      );
+
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const AuthGate()),
@@ -250,7 +276,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showError("??? ????? ??????: $e");
+        _showError("حدث خطأ غير متوقع: $e");
       }
     }
   }
@@ -258,8 +284,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text(message, textAlign: TextAlign.right),
-          backgroundColor: Colors.redAccent),
+        content: Text(message, textAlign: TextAlign.right),
+        backgroundColor: Colors.redAccent,
+      ),
     );
   }
 
@@ -291,76 +318,106 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    const Text("????? ???? ???????",
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    const Text(
+                      "إنشاء حساب جديد",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(height: 10),
-                    const Text("???? ??????? ???? ???????? ??????",
-                        style: TextStyle(color: Colors.white60)),
+                    const Text(
+                      "يرجى تعبئة الحقول بالبيانات الصحيحة",
+                      style: TextStyle(color: Colors.white60),
+                    ),
                     const SizedBox(height: 40),
-                    _buildField(_nameController, "????? ??????? *",
-                        Icons.person_outline),
                     _buildField(
-                        _phoneController, "9XXXXXXXX", Icons.phone_android,
-                        isNumber: true, label: "??? ?????? ???? 0 *"),
-                    _buildField(_emailController, "?????? ?????? (???????)",
-                        Icons.email_outlined,
-                        required: false),
-                    _buildField(_nationalIdController, "????? ?????? *",
-                        Icons.badge_outlined,
-                        isNumber: true),
-                    _buildField(_cityController, "??????? *",
-                        Icons.location_city_outlined),
-                    _buildField(_landmarkController, "???? ???? ???? *",
-                        Icons.location_on_outlined),
+                      _nameController,
+                      "الاسم الرباعي *",
+                      Icons.person_outline,
+                    ),
+                    _buildField(
+                      _phoneController,
+                      "09XXXXXXXX",
+                      Icons.phone_android,
+                      isNumber: true,
+                      label: "رقم الهاتف *",
+                    ),
+                    _buildField(
+                      _emailController,
+                      "البريد الإلكتروني (أو اتركه فارغاً)",
+                      Icons.email_outlined,
+                      required: false,
+                    ),
+                    _buildField(
+                      _nationalIdController,
+                      "الرقم الوطني *",
+                      Icons.badge_outlined,
+                      isNumber: true,
+                    ),
+                    _buildField(
+                      _cityController,
+                      "المدينة *",
+                      Icons.location_city_outlined,
+                    ),
+                    _buildField(
+                      _landmarkController,
+                      "أقرب نقطة دالة *",
+                      Icons.location_on_outlined,
+                    ),
                     const SizedBox(height: 10),
                     _buildGlassDropdown(
-                        hint: "???? ????? *",
-                        value: _selectedDept,
-                        items: _departments,
-                        onChanged: (v) => setState(() {
-                              _selectedDept = v;
-                              _selectedSemester = null;
-                            })),
+                      hint: "اختر القسم *",
+                      value: _selectedDept,
+                      items: _departments,
+                      onChanged: (v) => setState(() {
+                        _selectedDept = v;
+                        _selectedSemester = null; // إعادة تعيين الفصل عند تغيير القسم
+                      }),
+                    ),
                     const SizedBox(height: 20),
                     _buildSemesterDropdown(
-                        hint: "???? ????? ??????? *",
-                        value: _selectedSemester,
-                        items: _getSemesters(),
-                        onChanged: (v) =>
-                            setState(() => _selectedSemester = v)),
+                      hint: "اختر الفصل الدراسي *",
+                      value: _selectedSemester,
+                      items: _getSemesters(),
+                      onChanged: (v) => setState(() => _selectedSemester = v),
+                    ),
                     const SizedBox(height: 20),
                     _buildField(
-                        _passwordController, "???? ???? *", Icons.lock_outline,
-                        isPass: true,
-                        isVisible: _passwordVisible,
-                        onVisibilityToggle: () => setState(
-                            () => _passwordVisible = !_passwordVisible),
-                        extraSuffix: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.bolt, color: Colors.amber),
-                              onPressed: _generateStrongPassword,
-                              tooltip: "????? ???? ???? ????",
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy,
-                                  color: Colors.white70, size: 20),
-                              onPressed: _copyToClipboard,
-                              tooltip: "???",
-                            ),
-                          ],
-                        )),
-                    _buildField(_confirmPasswordController, "????? ???? ???? *",
-                        Icons.lock_reset,
-                        isPass: true,
-                        isVisible: _confirmPasswordVisible,
-                        onVisibilityToggle: () => setState(() =>
-                            _confirmPasswordVisible =
-                                !_confirmPasswordVisible)),
+                      _passwordController,
+                      "كلمة المرور *",
+                      Icons.lock_outline,
+                      isPass: true,
+                      isVisible: _passwordVisible,
+                      onVisibilityToggle: () => setState(
+                          () => _passwordVisible = !_passwordVisible),
+                      extraSuffix: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.bolt, color: Colors.amber),
+                            onPressed: _generateStrongPassword,
+                            tooltip: "توليد كلمة مرور قوية",
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.copy,
+                                color: Colors.white70, size: 20),
+                            onPressed: _copyToClipboard,
+                            tooltip: "نسخ",
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildField(
+                      _confirmPasswordController,
+                      "تأكيد كلمة المرور *",
+                      Icons.lock_reset,
+                      isPass: true,
+                      isVisible: _confirmPasswordVisible,
+                      onVisibilityToggle: () => setState(() =>
+                          _confirmPasswordVisible = !_confirmPasswordVisible),
+                    ),
                     const SizedBox(height: 30),
                     _buildRegisterButton(),
                   ],
@@ -380,35 +437,44 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-            colors: [Color(0xFF1976D2), Color(0xFF42A5F5)]),
+          colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
+        ),
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleRegister,
         style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20))),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
         child: _isLoading
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text("????? ??????",
+            : const Text(
+                "إنشاء حساب",
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildField(
-      TextEditingController controller, String hint, IconData icon,
-      {bool isPass = false,
-      bool isNumber = false,
-      bool required = true,
-      bool? isVisible,
-      VoidCallback? onVisibilityToggle,
-      String? label,
-      Widget? extraSuffix}) {
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    bool isPass = false,
+    bool isNumber = false,
+    bool required = true,
+    bool? isVisible,
+    VoidCallback? onVisibilityToggle,
+    String? label,
+    Widget? extraSuffix,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Directionality(
@@ -430,79 +496,100 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 if (extraSuffix != null) extraSuffix,
                 if (isPass)
                   IconButton(
-                      icon: Icon(
-                          isVisible == true
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white70),
-                      onPressed: onVisibilityToggle),
+                    icon: Icon(
+                      isVisible == true
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.white70,
+                    ),
+                    onPressed: onVisibilityToggle,
+                  ),
               ],
             ),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none),
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide.none,
+            ),
           ),
           validator: required
-              ? (v) => v == null || v.isEmpty ? "??? ????? ?????" : null
+              ? (v) => v == null || v.isEmpty ? "هذا الحقل مطلوب" : null
               : null,
         ),
       ),
     );
   }
 
-  Widget _buildGlassDropdown(
-      {required String hint,
-      String? value,
-      required List<String> items,
-      required Function(String?) onChanged}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
+  Widget _buildGlassDropdown({
+    required String hint,
+    String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(15)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: value,
-          hint: Text(hint,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4))),
-          dropdownColor: const Color(0xFF1E293B),
-          items: items
-              .map((s) => DropdownMenuItem(
-                  value: s,
-                  child: Text(s, style: const TextStyle(color: Colors.white))))
-              .toList(),
-          onChanged: onChanged,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: value,
+            hint: Text(
+              hint,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+            ),
+            dropdownColor: const Color(0xFF1E293B),
+            items: items
+                .map((s) => DropdownMenuItem(
+                      value: s,
+                      child: Text(s,
+                          style: const TextStyle(color: Colors.white)),
+                    ))
+                .toList(),
+            onChanged: onChanged,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSemesterDropdown(
-      {required String hint,
-      String? value,
-      required List<String> items,
-      required Function(String?) onChanged}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
+  Widget _buildSemesterDropdown({
+    required String hint,
+    String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(15)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: value,
-          hint: Text(hint,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.4))),
-          dropdownColor: const Color(0xFF1E293B),
-          items: items
-              .map((s) => DropdownMenuItem(
-                  value: s,
-                  child: Text(s, style: const TextStyle(color: Colors.white))))
-              .toList(),
-          onChanged: onChanged,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: value,
+            hint: Text(
+              hint,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+            ),
+            dropdownColor: const Color(0xFF1E293B),
+            items: items
+                .map((s) => DropdownMenuItem(
+                      value: s,
+                      child: Text(s,
+                          style: const TextStyle(color: Colors.white)),
+                    ))
+                .toList(),
+            onChanged: onChanged,
+          ),
         ),
       ),
     );

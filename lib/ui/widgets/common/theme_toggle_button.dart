@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../main.dart';
 
-class ThemeToggleButton extends StatelessWidget {
+class ThemeToggleButton extends ConsumerWidget {
   const ThemeToggleButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.isDarkMode;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = themeMode == ThemeMode.dark;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -28,7 +28,7 @@ class ThemeToggleButton extends StatelessWidget {
             label: 'فاتح',
             isSelected: !isDark,
             onTap: () {
-              if (isDark) themeProvider.toggleTheme();
+              if (isDark) ref.read(themeModeProvider.notifier).toggleTheme();
             },
           ),
           _buildOption(
@@ -37,7 +37,7 @@ class ThemeToggleButton extends StatelessWidget {
             label: 'داكن',
             isSelected: isDark,
             onTap: () {
-              if (!isDark) themeProvider.toggleTheme();
+              if (!isDark) ref.read(themeModeProvider.notifier).toggleTheme();
             },
           ),
         ],
@@ -93,3 +93,4 @@ class ThemeToggleButton extends StatelessWidget {
     );
   }
 }
+

@@ -1,11 +1,12 @@
 class Message {
   final String id;
   final String senderId;
-  final String senderRole; // 'student', 'teacher', 'admin'
+  final String senderRole; 
   final String text;
-  final String type; // 'text', 'image', 'voice', 'pdf'
+  final String type; 
   final String? fileUrl;
-  final String? encryptedKey; // RSA-encrypted AES key for E2EE
+  final String? encryptedKey;
+  final String? encryptedContent; 
   final bool isRead;
   final DateTime createdAt;
 
@@ -17,6 +18,7 @@ class Message {
     this.type = 'text',
     this.fileUrl,
     this.encryptedKey,
+    this.encryptedContent,
     this.isRead = false,
     required this.createdAt,
   });
@@ -29,6 +31,7 @@ class Message {
     String? type,
     String? fileUrl,
     String? encryptedKey,
+    String? encryptedContent,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -40,6 +43,7 @@ class Message {
       type: type ?? this.type,
       fileUrl: fileUrl ?? this.fileUrl,
       encryptedKey: encryptedKey ?? this.encryptedKey,
+      encryptedContent: encryptedContent ?? this.encryptedContent,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );

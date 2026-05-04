@@ -1,18 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import '../../../services/auth_service.dart';
+import '../../../presentation/providers/auth_provider.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
-  final _auth = AuthService();
 
   bool _loading = false;
   String? _emailError;
@@ -47,36 +46,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _loading = true);
 
     try {
-      await _auth.sendPasswordReset(email);
+      await ref.read(authProvider.notifier).resetPassword(email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك")),
       );
       Navigator.pop(context);
-    } on FirebaseAuthException catch (e) {
-      String msg = "تعذر الإرسال";
-
-      setState(() {
-        _lastFailedEmail = email;
-        if (e.code == 'invalid-email') {
-          msg = "البريد غير صحيح";
-          _emailError = "أدخل بريد صحيح";
-        }
-        if (e.code == 'user-not-found') {
-          msg = "لا يوجد حساب بهذا البريد";
-          _emailError = "لا يوجد حساب بهذا البريد";
-        }
-        if (e.code == 'too-many-requests') {
-          msg = "محاولات كثيرة. انتظر قليلاً";
-        }
-      });
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _lastFailedEmail = email);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("تعذر الإرسال: $e")));
+      String msg = "تعذر الإرسال: $e";
+      if (e.toString().contains('invalid-email')) {
+        msg = "البريد غير صحيح";
+        _emailError = "أدخل بريد صحيح";
+      } else if (e.toString().contains('user-not-found')) {
+        msg = "لا يوجد حساب بهذا البريد";
+        _emailError = "لا يوجد حساب بهذا البريد";
+      } else if (e.toString().contains('too-many-requests')) {
+        msg = "محاولات كثيرة. انتظر قليلاً";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

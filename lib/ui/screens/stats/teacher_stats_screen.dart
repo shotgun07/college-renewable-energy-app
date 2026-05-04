@@ -56,28 +56,63 @@ class TeacherStatsScreen extends ConsumerWidget {
   }
 
   Widget _buildPerformanceChart() {
+    // Simple visual weekly activity using bars
+    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+    const values = [0.6, 0.9, 0.4, 0.75, 0.5]; // relative heights
+
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'الأداء الأسبوعي',
-            style: TextStyle(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              const Icon(Icons.bar_chart, color: Color(0xFF64B5F6), size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'نشاط الأسبوع الحالي',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
-          AspectRatio(
-            aspectRatio: 1.7,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text('رسم بياني تجريبي',
-                    style: TextStyle(color: Colors.white24)),
-              ),
+          SizedBox(
+            height: 100,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(days.length, (i) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          height: 80 * values[i],
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                const Color(0xFF42A5F5).withValues(alpha: 0.9),
+                                const Color(0xFF1976D2).withValues(alpha: 0.6),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(days[i],
+                            style: const TextStyle(
+                                color: Colors.white54, fontSize: 9)),
+                      ],
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
         ],

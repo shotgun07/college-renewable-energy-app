@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/student/student_scaffold.dart';
-import '../../widgets/student/glass_tile.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/chat_provider.dart';
 import '../../../presentation/providers/admin_provider.dart';
 import 'select_teacher_screen.dart';
 import 'thread_chat_screen.dart';
 import 'student_admin_chat.dart';
+import 'ai_assistant_screen.dart';
+import '../../widgets/common/glass_components.dart';
 
 class StudentChatHub extends ConsumerWidget {
   final String departmentName;
@@ -22,9 +23,9 @@ class StudentChatHub extends ConsumerWidget {
 
     if (userAsync == null) {
       return const StudentScaffold(
-        title: "???? ???????",
+        title: "المحادثات",
         body: Center(
-            child: Text('??? ????? ?????? ?????',
+            child: Text('يرجى تسجيل الدخول أولاً',
                 style: TextStyle(color: Colors.white))),
       );
     }
@@ -40,7 +41,7 @@ class StudentChatHub extends ConsumerWidget {
     final threadsAsync = ref.watch(myThreadsProvider(uid));
 
     return StudentScaffold(
-      title: '???? ???????',
+      title: 'المحادثات',
       actions: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -88,7 +89,19 @@ class StudentChatHub extends ConsumerWidget {
         child: Column(
           children: [
             GlassTile(
-              title: '?????? ?? ???????',
+              title: 'مساعد الذكاء الاصطناعي',
+              subtitle: 'اسأل "سولاريس" عن أي شيء أكاديمي',
+              icon: Icons.auto_awesome,
+              color: Colors.purpleAccent,
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AiAssistantScreen()));
+              },
+            ),
+            GlassTile(
+              title: 'تواصل مع الإدارة',
               icon: Icons.admin_panel_settings,
               color: Colors.orangeAccent,
               onTap: () {
@@ -99,8 +112,8 @@ class StudentChatHub extends ConsumerWidget {
               },
             ),
             GlassTile(
-              title: '??? ?????? ?? ?????',
-              subtitle: '??? ?????: $dept | ?????: $sem',
+              title: 'ابدأ محادثة مع أستاذ',
+              subtitle: 'القسم: $dept | الفصل: $sem',
               icon: Icons.school,
               color: Colors.blueAccent,
               onTap: () {
@@ -118,7 +131,7 @@ class StudentChatHub extends ConsumerWidget {
               children: [
                 const Icon(Icons.history, color: Colors.white70),
                 const SizedBox(width: 8),
-                Text('????????? ???????',
+                Text('المحادثات السابقة',
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 18,
@@ -132,7 +145,7 @@ class StudentChatHub extends ConsumerWidget {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 40),
-                      child: Text('?? ???? ??????? ?????',
+                      child: Text('لا توجد محادثات بعد',
                           style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5))),
                     ),
@@ -192,7 +205,7 @@ class StudentChatHub extends ConsumerWidget {
               loading: () => const Center(
                   child: CircularProgressIndicator(color: Colors.white)),
               error: (error, _) => Center(
-                child: Text('???: $error',
+                child: Text('خطأ: $error',
                     style: const TextStyle(color: Colors.redAccent)),
               ),
             ),
@@ -204,8 +217,8 @@ class StudentChatHub extends ConsumerWidget {
 
   Future<String> _resolveTitle(
       WidgetRef ref, String type, String otherUid) async {
-    if (type == 'admin_user') return '???????';
-    if (otherUid.isEmpty) return '??????';
+    if (type == 'admin_user') return 'الإدارة';
+    if (otherUid.isEmpty) return 'مجهول';
     // Use AdminRepository via provider instead of direct Firestore call
     return ref.read(adminRepositoryProvider).getUserName(otherUid);
   }

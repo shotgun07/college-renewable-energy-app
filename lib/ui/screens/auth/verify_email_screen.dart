@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../presentation/providers/auth_provider.dart';
 
-class EmailVerificationScreen extends StatefulWidget {
+class EmailVerificationScreen extends ConsumerStatefulWidget {
   const EmailVerificationScreen({super.key});
 
   @override
-  State<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  ConsumerState<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
+class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> {
   bool _sending = false;
   bool _checking = false;
 
   Future<void> _resend() async {
-    final u = FirebaseAuth.instance.currentUser;
+    final u = ref.read(currentUserProvider);
     if (u == null) return;
 
     setState(() => _sending = true);
     try {
-      await u.sendEmailVerification();
+      await ref.read(authProvider.notifier).sendEmailVerification();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("تم إرسال رابط التحقق إلى بريدك الإلكتروني")));
     } catch (e) {
@@ -30,14 +31,13 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   }
 
   Future<void> _check() async {
-    final u = FirebaseAuth.instance.currentUser;
+    final u = ref.read(currentUserProvider);
     if (u == null) return;
 
     setState(() => _checking = true);
     try {
-      await u.reload();
-      final refreshed = FirebaseAuth.instance.currentUser;
-      if (refreshed != null && refreshed.emailVerified) {
+      final verified = await ref.read(authProvider.notifier).checkEmailVerification();
+      if (verified) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("تم التحقق بنجاح ✅")));
         setState(() {});
@@ -55,7 +55,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final u = FirebaseAuth.instance.currentUser;
+    final u = ref.watch(currentUserProvider);
     final email = u?.email ?? '';
 
     return Scaffold(
@@ -63,7 +63,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         title: const Text("تأكيد البريد الإلكتروني"),
         actions: [
           IconButton(
-            onPressed: () => FirebaseAuth.instance.signOut(),
+            onPressed: () => ref.read(authProvider.notifier).signOut(),
             icon: const Icon(Icons.logout),
           ),
         ],

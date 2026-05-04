@@ -17,8 +17,7 @@ ResultRepository resultRepository(Ref ref) {
 }
 
 @riverpod
-Stream<List<Map<String, dynamic>>> resultsStream(
-    Ref ref, String studentID) {
+Stream<List<Map<String, dynamic>>> resultsStream(Ref ref, String studentID) {
   return ref.watch(resultRepositoryProvider).getStudentResults(studentID).map(
       (results) => results.map((r) => {
             'studentID': r.studentID,

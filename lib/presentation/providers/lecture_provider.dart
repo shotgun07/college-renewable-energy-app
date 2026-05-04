@@ -34,8 +34,7 @@ GetLecturesForStudentUseCase getLecturesForStudentUseCase(Ref ref) {
 
 // Streams
 @riverpod
-Stream<List<Lecture>> lecturesForStudent(
-    Ref ref, String department, int semester) {
+Stream<List<Lecture>> lecturesForStudent(Ref ref, String department, int semester) {
   final repository = ref.watch(lectureRepositoryProvider);
   return repository.getLecturesForStudent(department, semester);
 }

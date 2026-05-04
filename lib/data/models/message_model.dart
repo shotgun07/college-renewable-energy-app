@@ -11,6 +11,7 @@ class MessageModel extends Message {
     super.type = 'text',
     super.fileUrl,
     super.encryptedKey,
+    super.encryptedContent,
     super.isRead = false,
   });
 
@@ -26,6 +27,7 @@ class MessageModel extends Message {
       type: data['type'] as String? ?? 'text',
       fileUrl: data['fileUrl'] as String?,
       encryptedKey: data['encryptedKey'] as String?,
+      encryptedContent: data['encryptedContent'] as String?,
       isRead: data['isRead'] as bool? ?? false,
     );
   }
@@ -40,6 +42,7 @@ class MessageModel extends Message {
       'isRead': isRead,
       if (fileUrl != null) 'fileUrl': fileUrl,
       if (encryptedKey != null) 'encryptedKey': encryptedKey,
+      if (encryptedContent != null) 'encryptedContent': encryptedContent,
     };
   }
 

@@ -6,7 +6,6 @@ class ResultRemoteDatasource {
 
   ResultRemoteDatasource(this._firestore);
 
-  /// Get results for a student
   Stream<List<ResultModel>> getStudentResults(String studentID) {
     return _firestore
         .collection('results')
@@ -19,7 +18,6 @@ class ResultRemoteDatasource {
     });
   }
 
-  /// Add results (batch import)
   Future<void> addResults(List<ResultModel> results) async {
     final batch = _firestore.batch();
 
@@ -31,7 +29,6 @@ class ResultRemoteDatasource {
     await batch.commit();
   }
 
-  /// Get results by department and semester
   Stream<List<ResultModel>> getResultsByDepartmentAndSemester(
       String department, int semester) {
     return _firestore

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/app_user.dart';
+import '../../constants/app_enums.dart';
 import '../../providers/user_provider.dart';
 import '../../ui/widgets/custom_error_widget.dart';
+import '../../services/department_service.dart';
+import '../../widgets/glass_components.dart';
+import '../widgets/student_migration_wizard.dart';
 
 class UsersManagementScreen extends ConsumerStatefulWidget {
   final AppUser user;
@@ -96,75 +100,83 @@ class _UsersManagementScreenState extends ConsumerState<UsersManagementScreen> {
                 onRefresh: _refresh,
                 child: ListView.builder(
                   controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: state.users.length + (state.isLoadingMore ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == state.users.length) {
                       return const Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: CircularProgressIndicator(color: Colors.white70)),
                       );
                     }
 
                     final user = state.users[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: _getRoleColor(user.role),
-                          child: Icon(
-                            _getRoleIcon(user.role),
-                            color: Colors.white,
+                    return GlassTile(
+                      title: user.fullName,
+                      subtitle: '${user.email}\nالدور: ${_getRoleDisplayName(user.role.name)}',
+                      icon: _getRoleIcon(user.role),
+                      color: _getRoleColor(user.role),
+                      onTap: () => _handleUserAction('edit', user),
+                      trailing: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, color: Colors.white70),
+                        onSelected: (value) => _handleUserAction(value, user),
+                        color: const Color(0xFF1E293B),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 18, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text('تعديل', style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
                           ),
-                        ),
-                        title: Text(user.fullName),
-                        subtitle: Text(
-                            '${user.email}\nالدور: ${_getRoleDisplayName(user.role.name)}'),
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (value) => _handleUserAction(value, user),
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit, size: 18),
-                                  SizedBox(width: 8),
-                                  Text('تعديل'),
-                                ],
-                              ),
+                          const PopupMenuItem(
+                            value: 'migrate',
+                            child: Row(
+                              children: [
+                                Icon(Icons.swap_horiz, size: 18, color: Colors.purpleAccent),
+                                SizedBox(width: 8),
+                                Text('نقل القسم', style: TextStyle(color: Colors.white)),
+                              ],
                             ),
-                            PopupMenuItem(
-                              value: 'toggle_2fa',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    user.twoFactorEnabled
-                                        ? Icons.lock_open
-                                        : Icons.lock,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(user.twoFactorEnabled
+                          ),
+                          PopupMenuItem(
+                            value: 'toggle_2fa',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  user.twoFactorEnabled
+                                      ? Icons.lock_open
+                                      : Icons.lock,
+                                  size: 18,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  user.twoFactorEnabled
                                       ? 'تعطيل 2FA'
-                                      : 'تفعيل 2FA'),
-                                ],
-                              ),
+                                      : 'تفعيل 2FA',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ],
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete,
-                                      size: 18, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('حذف',
-                                      style: TextStyle(color: Colors.red)),
-                                ],
-                              ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete,
+                                    size: 18, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('حذف',
+                                    style: TextStyle(color: Colors.red)),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -228,6 +240,9 @@ class _UsersManagementScreenState extends ConsumerState<UsersManagementScreen> {
       case 'edit':
         _editUser(user);
         break;
+      case 'migrate':
+        _migrateUser(user);
+        break;
       case 'delete':
         _deleteUser(user);
         break;
@@ -237,136 +252,34 @@ class _UsersManagementScreenState extends ConsumerState<UsersManagementScreen> {
     }
   }
 
-  void _editUser(AppUser user) {
-    final nameCtrl = TextEditingController(text: user.fullName);
-    final phoneCtrl = TextEditingController(text: user.phoneNumber);
-    final studentIdCtrl = TextEditingController(text: user.studentID);
-    String selectedRole = user.role.name;
-    String selectedDept = user.departmentName;
-    int selectedSemester = user.semester;
-
-    final roles = ['student', 'teacher', 'supervisor', 'admin'];
-    final depts = ['عام', 'بيئة', 'ICT', 'طاقة'];
-    final semesters = List.generate(8, (i) => i + 1);
-
+  void _migrateUser(AppUser user) {
+    if (user.role != UserRole.student) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('نقل القسم متاح للطلاب فقط')),
+      );
+      return;
+    }
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('تعديل: ${user.fullName}'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم الكامل',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الهاتف',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: studentIdCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'الرقم الأكاديمي',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedRole,
-                  decoration: const InputDecoration(
-                    labelText: 'الدور',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: roles
-                      .map((r) => DropdownMenuItem(
-                          value: r, child: Text(_getRoleDisplayName(r))))
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedRole = v!),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue:
-                      depts.contains(selectedDept) ? selectedDept : depts.first,
-                  decoration: const InputDecoration(
-                    labelText: 'القسم',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: depts
-                      .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedDept = v!),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<int>(
-                  initialValue: semesters.contains(selectedSemester)
-                      ? selectedSemester
-                      : 1,
-                  decoration: const InputDecoration(
-                    labelText: 'الفصل الدراسي',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: semesters
-                      .map((s) =>
-                          DropdownMenuItem(value: s, child: Text('الفصل $s')))
-                      .toList(),
-                  onChanged: (v) => setDialogState(() => selectedSemester = v!),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty) return;
-                try {
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .update({
-                    'fullName': nameCtrl.text.trim(),
-                    'phoneNumber': phoneCtrl.text.trim(),
-                    'studentID': studentIdCtrl.text.trim(),
-                    'role': selectedRole,
-                    'departmentName': selectedDept,
-                    'semester': selectedSemester,
-                  });
-                  if (!ctx.mounted) return;
-                  Navigator.pop(ctx);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('تم تحديث بيانات المستخدم بنجاح')),
-                  );
-                  ref.read(userProvider.notifier).fetchFirstPage(
-                      roleFilter:
-                          _selectedRole == 'الكل' ? null : _selectedRole);
-                } catch (e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('خطأ في التحديث: $e')),
-                  );
-                }
-              },
-              child: const Text('حفظ'),
-            ),
-          ],
-        ),
+      builder: (ctx) => StudentMigrationWizard(
+        student: user,
+        onSuccess: () {
+          ref.read(userProvider.notifier).fetchFirstPage(
+              roleFilter: _selectedRole == 'الكل' ? null : _selectedRole);
+        },
+      ),
+    );
+  }
+
+  void _editUser(AppUser user) {
+    showDialog(
+      context: context,
+      builder: (ctx) => EditUserDialog(
+        user: user,
+        onSuccess: () {
+          ref.read(userProvider.notifier).fetchFirstPage(
+              roleFilter: _selectedRole == 'الكل' ? null : _selectedRole);
+        },
       ),
     );
   }
@@ -427,5 +340,178 @@ class _UsersManagementScreenState extends ConsumerState<UsersManagementScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('خطأ: $e')));
     }
+  }
+}
+
+class EditUserDialog extends ConsumerStatefulWidget {
+  final AppUser user;
+  final VoidCallback onSuccess;
+
+  const EditUserDialog({super.key, required this.user, required this.onSuccess});
+
+  @override
+  ConsumerState<EditUserDialog> createState() => _EditUserDialogState();
+}
+
+class _EditUserDialogState extends ConsumerState<EditUserDialog> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _phoneCtrl;
+  late final TextEditingController _studentIdCtrl;
+  
+  late UserRole _selectedRole;
+  late Department _selectedDept;
+  late int _selectedSemester;
+
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.user.fullName);
+    _phoneCtrl = TextEditingController(text: widget.user.phoneNumber);
+    _studentIdCtrl = TextEditingController(text: widget.user.studentID);
+    
+    _selectedRole = widget.user.role;
+    _selectedDept = widget.user.department;
+    _selectedSemester = widget.user.semester;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _studentIdCtrl.dispose();
+    super.dispose();
+  }
+
+  String _getRoleDisplayName(String role) {
+    switch (role) {
+      case 'student':
+        return 'طالب';
+      case 'teacher':
+        return 'معلم';
+      case 'admin':
+        return 'مدير';
+      case 'supervisor':
+        return 'مشرف';
+      default:
+        return role;
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (_nameCtrl.text.trim().isEmpty) return;
+    setState(() => _isSaving = true);
+    
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.user.uid)
+          .update({
+        'fullName': _nameCtrl.text.trim(),
+        'phoneNumber': _phoneCtrl.text.trim(),
+        'studentID': _studentIdCtrl.text.trim(),
+        'role': _selectedRole.name,
+        'departmentName': _selectedDept.displayName,
+        'semester': _selectedSemester,
+      });
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث بيانات المستخدم بنجاح')),
+      );
+      widget.onSuccess();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في التحديث: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final roles = UserRole.values;
+    final depts = Department.values;
+
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1E293B),
+      title: Text('تعديل: ${widget.user.fullName}', style: const TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GlassTextField(
+              controller: _nameCtrl,
+              hint: 'الاسم الكامل',
+              icon: Icons.person,
+            ),
+            const SizedBox(height: 12),
+            GlassTextField(
+              controller: _phoneCtrl,
+              hint: 'رقم الهاتف',
+              icon: Icons.phone,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 12),
+            GlassTextField(
+              controller: _studentIdCtrl,
+              hint: 'الرقم الأكاديمي',
+              icon: Icons.badge,
+            ),
+            const SizedBox(height: 12),
+            GlassDropdown<UserRole>(
+              items: roles,
+              value: _selectedRole,
+              hint: 'الدور',
+              itemLabel: (r) => _getRoleDisplayName(r.name),
+              onChanged: (v) => setState(() => _selectedRole = v!),
+            ),
+            const SizedBox(height: 12),
+            GlassDropdown<Department>(
+              items: depts,
+              value: _selectedDept,
+              hint: 'القسم',
+              itemLabel: (d) => d.displayName,
+              onChanged: (v) {
+                setState(() {
+                  _selectedDept = v!;
+                  final validSems = DepartmentService.getSemestersForDepartment(v);
+                  if (!validSems.contains(_selectedSemester)) {
+                    _selectedSemester = validSems.first;
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            GlassDropdown<int>(
+              items: DepartmentService.getSemestersForDepartment(_selectedDept),
+              value: DepartmentService.getSemestersForDepartment(_selectedDept).contains(_selectedSemester) 
+                  ? _selectedSemester 
+                  : DepartmentService.getSemestersForDepartment(_selectedDept).first,
+              hint: 'الفصل الدراسي',
+              itemLabel: (s) => 'الفصل $s',
+              onChanged: (v) => setState(() => _selectedSemester = v!),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _saveChanges,
+          child: _isSaving
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Text('حفظ'),
+        ),
+      ],
+    );
   }
 }

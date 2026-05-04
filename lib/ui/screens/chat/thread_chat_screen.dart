@@ -14,6 +14,7 @@ import 'video_call_screen.dart';
 import '../../widgets/student/student_scaffold.dart';
 import '../../widgets/audio_message_player.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class ThreadChatScreen extends ConsumerStatefulWidget {
   final String threadId;
@@ -116,20 +117,30 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     final t = _c.text.trim();
     if (t.isEmpty) return;
 
+    final originalText = _c.text;
     _c.clear();
 
-    final message = Message(
-      id: '',
-      senderId: user.uid,
-      senderRole: user.role.name, // Convert enum to String
-      text: t,
-      createdAt: DateTime.now(),
-    );
+    try {
+      final message = Message(
+        id: '',
+        senderId: user.uid,
+        senderRole: user.role.name,
+        text: t,
+        createdAt: DateTime.now(),
+      );
 
-    await ref.read(sendMessageUseCaseProvider).call(widget.threadId, message);
-    await ref
-        .read(chatRepositoryProvider)
-        .markThreadAsRead(widget.threadId, user.uid);
+      await ref.read(sendMessageUseCaseProvider).call(widget.threadId, message);
+      await ref
+          .read(chatRepositoryProvider)
+          .markThreadAsRead(widget.threadId, user.uid);
+    } catch (e) {
+      if (mounted) {
+        _c.text = originalText; // Restore text on error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل إرسال الرسالة: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -152,7 +163,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
         id: '',
         senderId: user.uid,
         senderRole: user.role.name,
-        text: '???? ?????',
+        text: '🖼️ صورة',
         type: 'image',
         fileUrl: downloadUrl,
         createdAt: DateTime.now(),
@@ -164,7 +175,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('??? ??? ??????: $e')),
+          SnackBar(content: Text('خطأ في رفع الصورة: $e')),
         );
       }
     } finally {
@@ -205,7 +216,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('??? ??? ?????: $e')),
+          SnackBar(content: Text('خطأ في رفع الملف: $e')),
         );
       }
     } finally {
@@ -224,7 +235,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('??? ??? ???????: $e')),
+          SnackBar(content: Text('خطأ في بدء التسجيل: $e')),
         );
       }
     }
@@ -251,7 +262,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
           id: '',
           senderId: user.uid,
           senderRole: user.role.name,
-          text: '????? ?????',
+          text: '🎤 رسالة صوتية',
           type: 'audio',
           fileUrl: downloadUrl,
           createdAt: DateTime.now(),
@@ -263,7 +274,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('??? ????? ???????: $e')),
+          SnackBar(content: Text('خطأ في إرسال التسجيل: $e')),
         );
       }
     } finally {
@@ -285,6 +296,19 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
     if (user == null) return const SizedBox.shrink();
 
     final messagesAsync = ref.watch(threadMessagesProvider(widget.threadId));
+
+    // Auto-scroll on new messages
+    ref.listen(threadMessagesProvider(widget.threadId), (prev, next) {
+      if (next is AsyncData && next.value!.isNotEmpty) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0, // Since it's reversed, 0 is the bottom
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      }
+    });
 
     return StudentScaffold(
       title: widget.title,
@@ -308,7 +332,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
               data: (messages) {
                 if (messages.isEmpty) {
                   return Center(
-                      child: Text('???? ???????? ????',
+                      child: Text('ابدأ المحادثة بإرسال رسالة',
                           style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5))));
                 }
@@ -402,14 +426,27 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
-                                        Flexible(
-                                          child: Text(
-                                            msg.text,
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: mine ? Colors.white : Colors.black87),
+                                          Flexible(
+                                            child: Column(
+                                              crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  msg.text,
+                                                  style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: mine ? Colors.white : Colors.white),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  DateFormat('hh:mm a').format(msg.createdAt),
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: mine ? Colors.white70 : Colors.white60,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
                                         if (mine) ...[
                                           const SizedBox(width: 5),
                                           Icon(
@@ -428,7 +465,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
               loading: () => const Center(
                   child: CircularProgressIndicator(color: Colors.white)),
               error: (error, _) => Center(
-                child: Text('???: $error',
+                child: Text('خطأ: $error',
                     style: const TextStyle(color: Colors.redAccent)),
               ),
             ),
@@ -450,7 +487,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
                     style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.right,
                     decoration: InputDecoration(
-                      hintText: '???? ?????...',
+                      hintText: 'اكتب رسالة...',
                       hintStyle:
                           TextStyle(color: Colors.white.withValues(alpha: 0.4)),
                       filled: true,
@@ -469,7 +506,7 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
                 if (_isRecording)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text('???? ???????...', style: TextStyle(color: Colors.redAccent)),
+                    child: Text('جاري التسجيل...', style: TextStyle(color: Colors.redAccent)),
                   ),
                 if (!_isRecording) ...[
                   IconButton(

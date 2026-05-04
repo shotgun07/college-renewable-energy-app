@@ -127,7 +127,7 @@ final class SurveyNotifierProvider
   }
 }
 
-String _$surveyNotifierHash() => r'c17dede1f9d8af1578fc1f3ecca489be79b1f449';
+String _$surveyNotifierHash() => r'85deef3a54bc519200c305725f567687cfc59c6a';
 
 abstract class _$SurveyNotifier extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();

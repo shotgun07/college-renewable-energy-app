@@ -7,7 +7,6 @@ class ScheduleLocalDatasource {
   Future<void> cacheSchedules(String key, List<Map<String, dynamic>> schedules) async {
     final box = await Hive.openBox(_boxName);
     
-    // Convert any Timestamp objects to Iso8601String for safe serialization
     final sanitizedList = schedules.map((schedule) {
        final newMap = Map<String, dynamic>.from(schedule);
        newMap.forEach((k, v) {

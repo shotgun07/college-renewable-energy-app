@@ -5,7 +5,6 @@ import '../datasources/remote/chat_remote_datasource.dart';
 import '../models/message_model.dart';
 import '../models/chat_thread_model.dart';
 import '../../core/security/encryption_service.dart';
-import '../../core/security/app_encryption_helper.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDatasource _remoteDatasource;
@@ -47,19 +46,16 @@ class ChatRepositoryImpl implements ChatRepository {
 
   @override
   Stream<List<Message>> getMessages(String threadId, {int limit = 50, DateTime? startAfter}) {
-    // Return messages, decrypting text where applicable
     return _remoteDatasource.getMessages(threadId, limit: limit, startAfter: startAfter).asyncMap(
       (messages) async {
         final decrypted = <Message>[];
         for (final msg in messages) {
           if (msg.type == 'text') {
             try {
-              if (msg.encryptedKey == 'aes-cbc-global') {
-                final plaintext = AppEncryptionHelper.decrypt(msg.text);
-                decrypted.add(msg.copyWith(text: plaintext));
-              } else if (msg.encryptedKey != null && msg.encryptedKey!.isNotEmpty) {
+              if (msg.encryptedKey != null && msg.encryptedKey!.isNotEmpty) {
+                final ciphertext = msg.encryptedContent ?? msg.text;
                 final plaintext = await _encryption.decryptMessage(
-                    msg.text, msg.encryptedKey!);
+                    ciphertext, msg.encryptedKey!);
                 decrypted.add(msg.copyWith(text: plaintext));
               } else {
                 decrypted.add(msg);
@@ -80,15 +76,36 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<void> sendMessage(String threadId, Message message) async {
     String textToSend = message.text;
     String? encryptedKey;
+    String? encryptedContent;
 
-    // Only encrypt text-type messages
     if (message.type == 'text') {
-      try {
-        textToSend = AppEncryptionHelper.encrypt(message.text);
-        encryptedKey = 'aes-cbc-global';
-      } catch (_) {
-        // If encryption fails, send as plaintext (graceful degradation)
+      String receiverId = '';
+      final parts = threadId.split('_');
+      if (parts.length >= 3) {
+         receiverId = parts[1] == message.senderId ? parts[2] : parts[1];
+      } else {
+         final threadDoc = await _remoteDatasource.firestore.collection('threads').doc(threadId).get();
+         final participants = List<String>.from(threadDoc.data()?['participants'] ?? []);
+         receiverId = participants.firstWhere((id) => id != message.senderId, orElse: () => '');
       }
+
+      if (receiverId.isEmpty) {
+         throw Exception('Could not determine receiver ID from threadId');
+      }
+
+      final receiverPublicKey = await _remoteDatasource.getUserPublicKey(receiverId);
+      if (receiverPublicKey == null || receiverPublicKey.isEmpty) {
+        throw Exception('Receiver public key not found');
+      }
+
+      final encryptionResult = _encryption.encryptMessage(message.text, receiverPublicKey);
+      if (encryptionResult.isEmpty || encryptionResult['content']!.isEmpty) {
+        throw Exception('Encryption returned empty result');
+      }
+
+      encryptedContent = encryptionResult['content'];
+      encryptedKey = encryptionResult['key'];
+      textToSend = ''; 
     }
 
     final model = MessageModel(
@@ -100,6 +117,7 @@ class ChatRepositoryImpl implements ChatRepository {
       type: message.type,
       fileUrl: message.fileUrl,
       encryptedKey: encryptedKey,
+      encryptedContent: encryptedContent,
     );
     await _remoteDatasource.sendMessage(threadId, model);
   }

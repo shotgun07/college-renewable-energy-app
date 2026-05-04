@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../models/app_user.dart';
+import '../../../domain/entities/user.dart';
 import '../../../presentation/providers/admin_provider.dart';
 import '../../widgets/teacher/teacher_scaffold.dart';
 import '../../widgets/common/glass_components.dart';
@@ -16,7 +16,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   String? _selectedDept;
   int? _selectedSemester;
   bool _isLoading = false;
-  List<AppUser> _students = [];
+  List<User> _students = [];
   final Map<String, bool> _attendanceMap = {};
 
   final List<String> _departments = ['عام', 'ICT', 'طاقة', 'بيئة'];
@@ -41,20 +41,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           .read(adminRepositoryProvider)
           .getStudentsByDeptSemester(_selectedDept!, _selectedSemester!);
 
-      // Convert domain User to AppUser for compatibility with the UI
-      final list = users
-          .map((u) => AppUser(
-                uid: u.uid,
-                fullName: u.fullName,
-                email: u.email ?? '',
-                role: AppUser.roleFrom(u.role.name),
-                departmentName: u.departmentName,
-                semester: u.semester,
-                phoneNumber: u.phoneNumber,
-                nationalId: u.nationalId,
-                studentID: u.studentID,
-              ))
-          .toList();
+      final list = users.toList();
 
       setState(() {
         _students = list;

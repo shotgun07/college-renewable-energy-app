@@ -1,8 +1,5 @@
-/// User Role enumeration for the application
 enum UserRole { student, teacher, supervisor, admin }
 
-/// Domain entity representing a User in the business logic layer
-/// This is a pure business object with no dependencies on external frameworks
 class User {
   final String uid;
   final String fullName;
@@ -24,7 +21,7 @@ class User {
   final String? bio;
   final List<String> teachingKeys;
 
-  // Verification fields (from Phase 1)
+  
   final bool emailVerified;
   final bool customVerified;
   final bool requiresVerification;
@@ -64,10 +61,8 @@ class User {
     this.lastLogin,
   });
 
-  /// Check if user is verified (either via email or custom admin verification)
   bool get isVerified => emailVerified || customVerified;
 
-  /// Copy with method for immutability
   User copyWith({
     String? uid,
     String? fullName,

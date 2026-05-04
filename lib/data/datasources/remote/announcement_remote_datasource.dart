@@ -8,10 +8,6 @@ class AnnouncementRemoteDatasource {
 
   Stream<List<AnnouncementModel>> getAnnouncements(
       String department, int semester, {int limit = 20, DateTime? startAfter}) {
-    // Logic:
-    // - Department matches user dept OR 'الكل'
-    // - Semester matches user sem OR 0 (implied in client filtering usually, but can be done here if possible)
-    // Firestore 'whereIn' supports up to 10 values.
 
     var query = _firestore
         .collection('announcements')
@@ -26,11 +22,6 @@ class AnnouncementRemoteDatasource {
     return query.snapshots().map((snapshot) {
           final allDocs =
               snapshot.docs.map((doc) => AnnouncementModel.fromFirestore(doc));
-
-          // Additional client-side filtering for semester if needed,
-          // or we can just return all compatible department announcements
-          // and let the repository/UI filter by semester if the query is complex.
-          // But let's filter here for cleaner stream.
 
           return allDocs
               .where((a) => a.semester == 0 || a.semester == semester)

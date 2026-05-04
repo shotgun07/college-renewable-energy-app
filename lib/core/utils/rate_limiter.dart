@@ -12,7 +12,6 @@ class RateLimiter {
     final now = DateTime.now();
     final attempts = _attempts[key] ?? [];
 
-    // Remove old attempts outside the window
     final validAttempts = attempts.where((attempt) {
       return now.difference(attempt) <= window;
     }).toList();

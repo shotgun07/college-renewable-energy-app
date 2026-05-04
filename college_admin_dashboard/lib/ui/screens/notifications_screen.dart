@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/app_user.dart';
+import '../../widgets/glass_components.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final AppUser user;
@@ -27,77 +28,63 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             const Text(
               'إرسال إشعار جديد',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'عنوان الإشعار',
-                        border: OutlineInputBorder(),
+            GlassCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  GlassTextField(
+                    controller: _titleController,
+                    hint: 'عنوان الإشعار',
+                    icon: Icons.title,
+                  ),
+                  const SizedBox(height: 16),
+                  GlassTextField(
+                    controller: _bodyController,
+                    hint: 'محتوى الإشعار',
+                    icon: Icons.message_outlined,
+                    maxLines: 4,
+                  ),
+                  const SizedBox(height: 16),
+                  GlassDropdown<String>(
+                    items: const ['الكل', 'student', 'teacher', 'admin'],
+                    value: _targetGroup,
+                    hint: 'المجموعة المستهدفة',
+                    itemLabel: (v) => _getGroupDisplayName(v),
+                    onChanged: (value) {
+                      setState(() {
+                        _targetGroup = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSending ? null : _sendNotification,
+                      icon: _isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                          _isSending ? 'جاري الإرسال...' : 'إرسال الإشعار'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _bodyController,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'محتوى الإشعار',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _targetGroup,
-                      decoration: const InputDecoration(
-                        labelText: 'المجموعة المستهدفة',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'الكل', child: Text('الكل')),
-                        DropdownMenuItem(
-                            value: 'student', child: Text('الطلاب')),
-                        DropdownMenuItem(
-                            value: 'teacher', child: Text('المعلمين')),
-                        DropdownMenuItem(
-                            value: 'admin', child: Text('الإداريين')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _targetGroup = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSending ? null : _sendNotification,
-                        icon: _isSending
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.send),
-                        label: Text(
-                            _isSending ? 'جاري الإرسال...' : 'إرسال الإشعار'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 30),
@@ -128,36 +115,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   itemBuilder: (context, index) {
                     final doc = snapshot.data!.docs[index];
                     final data = doc.data() as Map<String, dynamic>;
-                    final timestamp = data['createdAt'] as Timestamp?;
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading:
-                            const Icon(Icons.notifications, color: Colors.blue),
-                        title: Text(data['title'] ?? ''),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(data['body'] ?? ''),
-                            const SizedBox(height: 4),
-                            Text(
-                              'المجموعة: ${_getGroupDisplayName(data['department'] ?? 'الكل')}',
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                            ),
-                            if (timestamp != null)
-                              Text(
-                                'التاريخ: ${timestamp.toDate().toString().split('.')[0]}',
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                              ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteNotification(doc.id),
-                        ),
+                    return GlassTile(
+                      title: data['title'] ?? '',
+                      subtitle: '${data['body'] ?? ''}\nالمجموعة: ${_getGroupDisplayName(data['department'] ?? 'الكل')}',
+                      icon: Icons.notifications,
+                      color: Colors.blueAccent,
+                      onTap: () {},
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () => _deleteNotification(doc.id),
                       ),
                     );
                   },
@@ -212,8 +179,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: const Text('هل أنت متأكد من حذف هذا الإشعار؟'),
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
+        content: const Text('هل أنت متأكد من حذف هذا الإشعار؟', style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -231,7 +199,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SnackBar(content: Text('تم حذف الإشعار')),
               );
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),

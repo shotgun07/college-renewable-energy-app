@@ -47,6 +47,10 @@
 		<true/>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>We need access to your microphone to let you record and send voice notes in the chat.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>We need camera access to allow you to take photos for your profile and assignments.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>We need photo library access to allow you to upload existing media files.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

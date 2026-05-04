@@ -99,6 +99,50 @@ final class AnnouncementLocalDatasourceProvider extends $FunctionalProvider<
 String _$announcementLocalDatasourceHash() =>
     r'3498e4b72fae7bbe0aaa02948d3b70c47a81022d';
 
+@ProviderFor(offlineQueueDatasource)
+final offlineQueueDatasourceProvider = OfflineQueueDatasourceProvider._();
+
+final class OfflineQueueDatasourceProvider extends $FunctionalProvider<
+    OfflineQueueDatasource,
+    OfflineQueueDatasource,
+    OfflineQueueDatasource> with $Provider<OfflineQueueDatasource> {
+  OfflineQueueDatasourceProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'offlineQueueDatasourceProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$offlineQueueDatasourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<OfflineQueueDatasource> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  OfflineQueueDatasource create(Ref ref) {
+    return offlineQueueDatasource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(OfflineQueueDatasource value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<OfflineQueueDatasource>(value),
+    );
+  }
+}
+
+String _$offlineQueueDatasourceHash() =>
+    r'aca3b85436789526169314f07bb5ffdff424a566';
+
 @ProviderFor(announcementRepository)
 final announcementRepositoryProvider = AnnouncementRepositoryProvider._();
 
@@ -141,7 +185,7 @@ final class AnnouncementRepositoryProvider extends $FunctionalProvider<
 }
 
 String _$announcementRepositoryHash() =>
-    r'dabdddf176d7754368cdc4e10313eae2451bdea3';
+    r'ced2d6b9526207f9f1c1bd6a0dbe78e49dae5465';
 
 @ProviderFor(announcements)
 final announcementsProvider = AnnouncementsFamily._();

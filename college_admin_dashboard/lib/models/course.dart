@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/app_enums.dart';
 
 enum ResourceType { pdf, video, link }
 
@@ -51,7 +52,7 @@ class CourseResource {
 class Course {
   final String id;
   final String name;
-  final String department;
+  final Department department;
   final int semester;
   final String? teacherId;
 
@@ -66,7 +67,7 @@ class Course {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'department': department,
+      'department': department.displayName,
       'semester': semester,
       'teacherId': teacherId,
     };
@@ -76,7 +77,7 @@ class Course {
     return Course(
       id: id,
       name: data['name'] ?? 'مادة غير معروفة',
-      department: data['department'] ?? 'عام',
+      department: Department.fromString(data['department']),
       semester: data['semester'] ?? 1,
       teacherId: data['teacherId'],
     );

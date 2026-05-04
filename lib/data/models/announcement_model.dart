@@ -42,6 +42,6 @@ class AnnouncementModel extends Announcement {
 
   static DateTime _toDateTime(dynamic v) {
     if (v is Timestamp) return v.toDate();
-    return DateTime.now(); // Fallback
+    return DateTime.now(); 
   }
 }

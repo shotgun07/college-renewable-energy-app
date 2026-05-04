@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth; 
 import '../../../presentation/providers/auth_provider.dart';
 import '../../widgets/student/student_scaffold.dart';
 import '../../../services/profile_image_service.dart';
@@ -31,14 +30,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("?? ????? ?????? ??????? ?????")),
+            const SnackBar(content: Text("تم تحديث صورة الملف الشخصي بنجاح")),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("??? ?? ????? ??????: $e")),
+          SnackBar(content: Text("فشل في رفع الصورة: $e")),
         );
       }
     } finally {
@@ -48,50 +47,121 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  void _showEditInfoDialog(BuildContext context, user) {
+    final bioController = TextEditingController(text: user.bio ?? '');
+    final cityController = TextEditingController(text: user.city ?? '');
+    final landmarkController = TextEditingController(text: user.landmark ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text("تعديل المعلومات الشخصية",
+            style: TextStyle(color: Colors.white)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildEditField(bioController, "نبذة تعريفية", maxLines: 3),
+              _buildEditField(cityController, "المدينة"),
+              _buildEditField(landmarkController, "أقرب نقطة دالة"),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("إلغاء")),
+          ElevatedButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+              
+              try {
+                await ref.read(authProvider.notifier).updateProfile(user.uid, {
+                  'bio': bioController.text.trim(),
+                  'city': cityController.text.trim(),
+                  'landmark': landmarkController.text.trim(),
+                });
+                
+                navigator.pop();
+                messenger.showSnackBar(
+                    const SnackBar(content: Text("تم تحديث البيانات بنجاح")));
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text("خطأ: $e")));
+              }
+            },
+            child: const Text("حفظ"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditField(TextEditingController controller, String label,
+      {int maxLines = 1}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white70),
+          enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white24)),
+        ),
+      ),
+    );
+  }
+
   void _showChangePasswordDialog(BuildContext context) {
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text("????? ???? ??????",
+        title: const Text("تغيير كلمة المرور",
             style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
-            labelText: "???? ?????? ???????",
+            labelText: "كلمة المرور الجديدة",
             labelStyle: TextStyle(color: Colors.white70),
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("?????")),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("إلغاء"),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (controller.text.length < 6) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("???? ?????? ??? ?? ???? 6 ???? ??? ?????")));
+                    content: Text("كلمة المرور يجب أن تكون 6 أحرف على الأقل")));
                 return;
               }
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
               try {
-                // Keep FirebaseAuth for now since updatePassword is not in repo yet
-                await FirebaseAuth.instance.currentUser
-                    ?.updatePassword(controller.text);
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("?? ??????? ?????")));
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text("???: $e")));
+                await ref.read(authProvider.notifier).updatePassword(controller.text);
+                
+                if (navigator.canPop()) {
+                  navigator.pop();
                 }
+                messenger.showSnackBar(
+                    const SnackBar(content: Text("تم تغيير كلمة المرور بنجاح")));
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text("خطأ: $e")));
               }
             },
-            child: const Text("???"),
+            child: const Text("حفظ"),
           ),
         ],
       ),
@@ -188,39 +258,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return authState.when(
       loading: () => const StudentScaffold(
-        title: "???? ??????",
+        title: "الملف الشخصي",
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       ),
       error: (e, st) => StudentScaffold(
-        title: "???? ??????",
+        title: "الملف الشخصي",
         body: Center(
-            child: Text("???? ??? ????????: \$e",
+            child: Text("حدث خطأ غير متوقع: \$e",
                 style: const TextStyle(color: Colors.white))),
       ),
       data: (user) {
         if (user == null) {
           return const StudentScaffold(
-            title: "???? ??????",
+            title: "الملف الشخصي",
             body: Center(
-                child: Text("??? ????? ?????? ?????",
+                child: Text("يرجى تسجيل الدخول أولاً",
                     style: TextStyle(color: Colors.white))),
           );
         }
 
         final fullName = user.fullName;
-        final email = user.email ?? '??? ?????';
+        final email = user.email ?? 'لا يوجد';
         final phone = user.phoneNumber;
         final studentID = user.studentID;
         final dept = user.departmentName;
         final twoFactorEnabled = user.twoFactorEnabled;
 
         final bool hasRealEmail = email.isNotEmpty &&
-            email != '??? ?????' &&
+            email != 'لا يوجد' &&
             !email.contains(phone) &&
             !email.endsWith('@college.edu.ly');
 
         return StudentScaffold(
-          title: "???? ??????",
+          title: "الملف الشخصي",
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -280,25 +350,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 30),
                 _buildProfileItem(
-                    "????? ??????",
-                    fullName.isEmpty ? "??? ????" : fullName,
+                    "الاسم الكامل",
+                    fullName.isEmpty ? "غير مسجل" : fullName,
                     Icons.person_outline),
+                if (user.bio != null && user.bio!.isNotEmpty)
+                  _buildProfileItem("نبذة تعريفية", user.bio!, Icons.info_outline),
                 if (hasRealEmail)
                   _buildProfileItem(
-                      "?????? ??????????", email, Icons.email_outlined),
+                      "البريد الإلكتروني", email, Icons.email_outlined),
                 _buildProfileItem(
-                    "??? ??????",
-                    phone.isEmpty ? "??? ????" : phone,
+                    "رقم الهاتف",
+                    phone.isEmpty ? "غير مسجل" : phone,
                     Icons.phone_android_outlined),
-                _buildProfileItem("????? ???????", dept, Icons.school_outlined),
+                _buildProfileItem("القسم الأكاديمي", dept, Icons.school_outlined),
                 _buildProfileItem(
-                    "??? ?????",
-                    studentID.isEmpty ? "??????? ???????..." : studentID,
+                    "رقم القيد",
+                    studentID.isEmpty ? "لم يتم التعيين بعد" : studentID,
                     Icons.assignment_ind_outlined),
                 const SizedBox(height: 30),
                 const Align(
                   alignment: Alignment.centerRight,
-                  child: Text("??????? ??????",
+                  child: Text("إعدادات الأمان",
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -306,8 +378,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 15),
                 _buildSecurityToggle(
-                  "???????? ???????? (2FA)",
-                  "????? ?????? ??? ??? ?????? (SMS)",
+                  "التحقق بخطوتين (2FA)",
+                  "حماية الحساب بكود إضافي عند كل دخول (SMS)",
                   twoFactorEnabled,
                   (val) async {
                     await ref
@@ -316,7 +388,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   },
                 ),
                 _buildActionTile(
-                  "????? ???? ??????",
+                  "تعديل المعلومات الشخصية",
+                  Icons.edit_note_outlined,
+                  () => _showEditInfoDialog(context, user),
+                ),
+                _buildActionTile(
+                  "تغيير كلمة المرور",
                   Icons.lock_outline,
                   () => _showChangePasswordDialog(context),
                 ),
@@ -342,7 +419,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       }
                     },
                     icon: const Icon(Icons.logout, color: Colors.white),
-                    label: const Text("????? ??????",
+                    label: const Text("تسجيل الخروج",
                         style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,

@@ -2,14 +2,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/ai_message.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../../data/repositories/ai_repository_impl.dart';
+import '../../../../env/env.dart';
 
 part 'ai_chat_provider.g.dart';
 
-const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: 'TODO: Replace with actual key or Environment variable');
-
 @riverpod
 AiRepository aiRepository(Ref ref) {
-  return AiRepositoryImpl(apiKey: geminiApiKey);
+  final apiKey = Env.geminiApiKey;
+  return AiRepositoryImpl(apiKey: apiKey);
 }
 
 @riverpod

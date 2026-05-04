@@ -6,12 +6,11 @@ class LectureRemoteDatasource {
 
   LectureRemoteDatasource(this._firestore);
 
-  /// Add a new lecture
+
   Future<void> addLecture(LectureModel lecture) async {
     await _firestore.collection('lectures').add(lecture.toMap());
   }
 
-  /// Get lectures for student (by department and semester)
   Stream<List<LectureModel>> getLecturesForStudent(
       String department, int semester) {
     return _firestore
@@ -27,7 +26,6 @@ class LectureRemoteDatasource {
     });
   }
 
-  /// Get lectures by teacher
   Stream<List<LectureModel>> getLecturesByTeacher(String teacherId) {
     return _firestore
         .collection('lectures')
@@ -41,7 +39,6 @@ class LectureRemoteDatasource {
     });
   }
 
-  /// Delete a lecture
   Future<void> deleteLecture(String lectureId) async {
     await _firestore.collection('lectures').doc(lectureId).delete();
   }
