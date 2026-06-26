@@ -94,7 +94,7 @@ void main() async {
   
   // Catch asynchronous Dart/Platform Errors safely
   PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('Global Async Exception: $error');
+    if (kDebugMode) debugPrint('Global Async Exception: $error');
     // TODO: Send error to Firebase Crashlytics Service
     return true; 
   };
@@ -119,7 +119,7 @@ void main() async {
       firebaseInitialized = true;
     } catch (e, stacktrace) {
       initError = e is Exception ? e : Exception(e.toString());
-      debugPrint('Firebase init attempt ${retryCount + 1} failed: $e\n$stacktrace');
+      if (kDebugMode) debugPrint('Firebase init attempt ${retryCount + 1} failed: $e\n$stacktrace');
       retryCount++;
       if (retryCount < maxRetries) {
         await Future.delayed(const Duration(seconds: 2));
@@ -232,14 +232,9 @@ class MyApp extends ConsumerWidget {
     // and then rebuild the UI without restarting the entire app.
     // I'll provide a more robust approach:
     final completer = Completer<void>();
-    // Re-run main after a short delay
     Future.delayed(Duration.zero, () {
-      // Safe Restart Approach
-      runApp(
-        ProviderScope(
-          child: MyApp(firebaseInitialized: false), // Handle retry internally vs re-calling main
-        ),
-      );
+      // Recall main() to safely trigger Firebase Initialization over again
+      main();
       completer.complete();
     });
     return completer.future;

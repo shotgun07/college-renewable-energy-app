@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>App</string>
+		<string>College Energy</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>app</string>
+		<string>CollegeRenewableEnergyApp</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -51,7 +51,14 @@
 		<string>We need camera access to allow you to take photos for your profile and assignments.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>We need photo library access to allow you to upload existing media files.</string>
+		<key>NSFaceIDUsageDescription</key>
+		<string>We need Face ID to securely authenticate you and keep your account safe.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>

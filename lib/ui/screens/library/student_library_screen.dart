@@ -32,7 +32,12 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
   Future<void> _download(String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      debugPrint('Could not launch $url');
+      if (kDebugMode) debugPrint('Could not launch $url');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذّر فتح الملف، يرجى المحاولة مجدداً')),
+        );
+      }
     }
   }
 

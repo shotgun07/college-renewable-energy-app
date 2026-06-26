@@ -20,7 +20,7 @@ class VerificationReminderService {
       // Remind every 24 hours
       return now.difference(lastDate).inHours >= 24;
     } catch (e) {
-      debugPrint('Error checking reminder status: $e');
+      if (kDebugMode) debugPrint('Error checking reminder status: $e');
       return false;
     }
   }
@@ -40,7 +40,7 @@ class VerificationReminderService {
       });
       await markReminderShown();
     } catch (e) {
-      debugPrint('Error dismissing reminder: $e');
+      if (kDebugMode) debugPrint('Error dismissing reminder: $e');
     }
   }
 }

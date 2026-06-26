@@ -170,7 +170,6 @@ class _ThreadChatScreenState extends ConsumerState<ThreadChatScreen> {
       );
 
       await ref.read(sendMessageUseCaseProvider).call(widget.threadId, message);
-      await ref.read(sendMessageUseCaseProvider).call(widget.threadId, message);
       await ref.read(chatRepositoryProvider).markThreadAsRead(widget.threadId, user.uid);
     } catch (e) {
       if (mounted) {

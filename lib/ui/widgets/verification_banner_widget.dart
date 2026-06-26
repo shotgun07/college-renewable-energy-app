@@ -44,18 +44,16 @@ class _VerificationBannerWidgetState
 
   Future<void> _handleDismiss() async {
     await _reminderService.dismissReminder(widget.userId);
+    if (!mounted) return;
     setState(() {
       _showBanner = false;
     });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('سيتم تذكيرك لاحقاً للتحقق من حسابك'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('سيتم تذكيرك لاحقاً للتحقق من حسابك'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   void _navigateToCodeVerification() {

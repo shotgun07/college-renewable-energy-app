@@ -19,7 +19,7 @@ class ProfileImageService {
       );
       return image;
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      if (kDebugMode) debugPrint('Error picking image: $e');
       return null;
     }
   }
@@ -45,7 +45,7 @@ class ProfileImageService {
 
       return downloadUrl;
     } catch (e) {
-      debugPrint('Error uploading profile image: $e');
+      if (kDebugMode) debugPrint('Error uploading profile image: $e');
       return null;
     }
   }

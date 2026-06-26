@@ -28,3 +28,39 @@
     public static int d(...);
     public static int v(...);
 }
+
+# ── flutter_secure_storage (uses Tink cryptography library) ──────────────────
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.crypto.tink.**
+
+# ── Hive (uses dart mirrors-like reflection on adapters) ─────────────────────
+-keep class * extends com.hive.** { *; }
+-keepclassmembers class ** {
+    @HiveField *;
+}
+
+# ── encrypt / PointyCastle (RSA & AES rely on class name reflection) ─────────
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class com.nimbusds.** { *; }
+-dontwarn com.nimbusds.**
+
+# ── audioplayers ─────────────────────────────────────────────────────────────
+-keep class xyz.luan.audioplayers.** { *; }
+-dontwarn xyz.luan.audioplayers.**
+
+# ── record (audio recording plugin) ─────────────────────────────────────────
+-keep class com.llfbandit.record.** { *; }
+-dontwarn com.llfbandit.record.**
+
+# ── url_launcher ─────────────────────────────────────────────────────────────
+-keep class io.flutter.plugins.urllauncher.** { *; }
+-dontwarn io.flutter.plugins.urllauncher.**
+
+# ── file_picker ──────────────────────────────────────────────────────────────
+-keep class com.mr.flutter.plugin.filepicker.** { *; }
+-dontwarn com.mr.flutter.plugin.filepicker.**
+
+# ── image_picker / file_picker ───────────────────────────────────────────────
+-keep class io.flutter.plugins.imagepicker.** { *; }
+-dontwarn io.flutter.plugins.imagepicker.**

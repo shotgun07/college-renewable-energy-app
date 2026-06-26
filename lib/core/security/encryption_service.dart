@@ -79,7 +79,7 @@ class EncryptionService {
       return aesEncrypter.decrypt(
           enc.Encrypted.fromBase64(encryptedContentBase64), iv: iv);
     } catch (e) {
-      debugPrint('Decryption error: $e');
+      if (kDebugMode) debugPrint('Decryption error: $e');
       return '[فك التشفير فشل]';
     }
   }

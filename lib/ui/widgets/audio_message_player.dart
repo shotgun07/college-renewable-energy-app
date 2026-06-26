@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -17,6 +18,7 @@ class AudioMessagePlayer extends StatefulWidget {
 
 class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
   late final AudioPlayer _player;
+  final List<StreamSubscription> _subscriptions = [];
   bool _isPlaying = false;
   bool _isLoading = false;
   Duration _duration = Duration.zero;
@@ -28,15 +30,15 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
     _player = AudioPlayer();
     _player.setSourceUrl(widget.audioUrl);
 
-    _player.onDurationChanged.listen((d) {
+    _subscriptions.add(_player.onDurationChanged.listen((d) {
       if (mounted) setState(() => _duration = d);
-    });
+    }));
 
-    _player.onPositionChanged.listen((p) {
+    _subscriptions.add(_player.onPositionChanged.listen((p) {
       if (mounted) setState(() => _position = p);
-    });
+    }));
 
-    _player.onPlayerStateChanged.listen((state) {
+    _subscriptions.add(_player.onPlayerStateChanged.listen((state) {
       if (mounted) {
         setState(() {
           _isPlaying = state == PlayerState.playing;
@@ -45,11 +47,14 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
           }
         });
       }
-    });
+    }));
   }
 
   @override
   void dispose() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
     _player.dispose();
     super.dispose();
   }
