@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../models/lecture.dart';
 import '../../../services/lecture_service.dart';
 import '../../widgets/student/student_scaffold.dart';
+import 'package:flutter/foundation.dart';
 import '../../widgets/common/error_widgets.dart';
 
 class StudentLibraryScreen extends StatefulWidget {

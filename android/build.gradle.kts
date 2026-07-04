@@ -28,6 +28,12 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
+    if (project.name != "app") {
+        afterEvaluate {
+            val ext = extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)
+            ext?.ndkVersion = "30.0.14904198"
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
