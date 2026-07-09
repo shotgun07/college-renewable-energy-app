@@ -247,8 +247,8 @@ class AuthRemoteDatasource {
         'uid': user.uid,
         'email': email.trim(),
         'emailVerified': false,        
-        'customVerified': false,        
-        'requiresVerification': true,  
+        'customVerified': true,        
+        'requiresVerification': false,  
         'verificationRequestedAt': null, 
         'lastLogin': FieldValue.serverTimestamp(),
       });

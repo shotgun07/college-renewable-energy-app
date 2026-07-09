@@ -7,8 +7,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, PlatformDispatcher;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/legacy.dart' as riverpod
-    show ChangeNotifierProvider;
 
 import 'firebase_options.dart';
 import 'providers/theme_provider.dart';
@@ -33,19 +31,10 @@ void main() async {
     };
   }
 
-  // Configure Firestore persistence: disable on web to avoid exclusive access
-  // errors in multi-tab/dev server environments.
-  if (kIsWeb) {
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: false,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    );
-  } else {
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    );
-  }
+  // Configure Firestore persistence (for cloud_firestore v5+ compatibility)
+  // Web defaults to memory cache, keeping multi-tab environments safe.
+  // Native defaults to persistent storage.
+  FirebaseFirestore.instance.settings = const Settings();
 
   runApp(
     const riverpod.ProviderScope(

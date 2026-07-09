@@ -8,6 +8,7 @@ import '../../ui/widgets/custom_error_widget.dart';
 import '../../services/department_service.dart';
 import '../../widgets/glass_components.dart';
 import '../widgets/student_migration_wizard.dart';
+import '../../security/app_encryption_helper.dart';
 
 class UsersManagementScreen extends ConsumerStatefulWidget {
   final AppUser user;
@@ -357,6 +358,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _studentIdCtrl;
+  late final TextEditingController _nationalIdCtrl;
   
   late UserRole _selectedRole;
   late Department _selectedDept;
@@ -370,6 +372,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
     _nameCtrl = TextEditingController(text: widget.user.fullName);
     _phoneCtrl = TextEditingController(text: widget.user.phoneNumber);
     _studentIdCtrl = TextEditingController(text: widget.user.studentID);
+    _nationalIdCtrl = TextEditingController(text: widget.user.nationalId);
     
     _selectedRole = widget.user.role;
     _selectedDept = widget.user.department;
@@ -381,6 +384,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _studentIdCtrl.dispose();
+    _nationalIdCtrl.dispose();
     super.dispose();
   }
 
@@ -409,8 +413,9 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
           .doc(widget.user.uid)
           .update({
         'fullName': _nameCtrl.text.trim(),
-        'phoneNumber': _phoneCtrl.text.trim(),
-        'studentID': _studentIdCtrl.text.trim(),
+        'phoneNumber': AppEncryptionHelper.encrypt(_phoneCtrl.text.trim()),
+        'studentID': AppEncryptionHelper.encrypt(_studentIdCtrl.text.trim()),
+        'nationalId': AppEncryptionHelper.encrypt(_nationalIdCtrl.text.trim()),
         'role': _selectedRole.name,
         'departmentName': _selectedDept.displayName,
         'semester': _selectedSemester,
@@ -462,6 +467,12 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
               controller: _studentIdCtrl,
               hint: 'الرقم الأكاديمي',
               icon: Icons.badge,
+            ),
+            const SizedBox(height: 12),
+            GlassTextField(
+              controller: _nationalIdCtrl,
+              hint: 'الرقم الوطني',
+              icon: Icons.credit_card,
             ),
             const SizedBox(height: 12),
             GlassDropdown<UserRole>(

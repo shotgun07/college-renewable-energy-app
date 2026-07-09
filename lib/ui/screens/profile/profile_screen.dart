@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../presentation/providers/auth_provider.dart';
@@ -323,7 +324,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 radius: 55,
                                 backgroundColor: const Color(0xFF1976D2),
                                 backgroundImage: user.profileImageUrl != null
-                                    ? NetworkImage(user.profileImageUrl!)
+                                    ? (user.profileImageUrl!.startsWith('data:image')
+                                        ? MemoryImage(base64Decode(user.profileImageUrl!.split(',').last)) as ImageProvider
+                                        : NetworkImage(user.profileImageUrl!))
                                     : null,
                                 child: user.profileImageUrl == null
                                     ? const Icon(Icons.person,

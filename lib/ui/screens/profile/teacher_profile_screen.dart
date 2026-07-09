@@ -6,6 +6,7 @@ import '../../widgets/teacher/teacher_scaffold.dart';
 import 'package:app/services/profile_image_service.dart';
 import 'package:app/domain/entities/user.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class TeacherProfileScreen extends ConsumerStatefulWidget {
   const TeacherProfileScreen({super.key});
@@ -105,7 +106,9 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
                           radius: 65,
                           backgroundColor: const Color(0xFF1976D2),
                           backgroundImage: profileImageUrl != null
-                              ? CachedNetworkImageProvider(profileImageUrl)
+                              ? (profileImageUrl.startsWith('data:image')
+                                  ? MemoryImage(base64Decode(profileImageUrl.split(',').last)) as ImageProvider
+                                  : CachedNetworkImageProvider(profileImageUrl))
                               : null,
                           child: profileImageUrl == null
                               ? (_isUploading

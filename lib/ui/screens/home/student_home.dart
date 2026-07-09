@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/student/student_scaffold.dart';
 // import '../../widgets/student/student_provider.dart'; // Removed
-import '../../widgets/verification_banner_widget.dart';
+// import '../../widgets/verification_banner_widget.dart';
 
 import '../../../presentation/providers/auth_provider.dart';
 
@@ -42,13 +43,10 @@ class StudentHome extends ConsumerWidget {
       title: 'كلية الطاقة المتجددة',
       showBackButton: false,
       drawer:
-          _buildDrawer(context, ref, fullName, deptName, semester, studentID),
+          _buildDrawer(context, ref, fullName, deptName, semester, studentID, user.profileImageUrl),
       body: Column(
         children: [
-          // Verification banner for unverified users
-          VerificationBannerWidget(
-            userId: user.uid,
-          ),
+          // Verification banner removed per user request
           if (studentID.trim().isEmpty || studentID == 'null')
             const _EnrollmentBannerWidget(),
           // Main content
@@ -57,7 +55,7 @@ class StudentHome extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildWelcomeCard(fullName, deptName, semester, studentID),
+                  _buildWelcomeCard(fullName, deptName, semester, studentID, user.profileImageUrl),
                   const SizedBox(height: 30),
                   _buildInfoText(),
                   const SizedBox(height: 30),
@@ -155,7 +153,7 @@ class StudentHome extends ConsumerWidget {
   }
 
   Widget _buildWelcomeCard(
-      String name, String dept, int semester, String studentID) {
+      String name, String dept, int semester, String studentID, String? profileImageUrl) {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
@@ -177,10 +175,17 @@ class StudentHome extends ConsumerWidget {
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 35,
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 40, color: Color(0xFF1976D2)),
+              backgroundImage: profileImageUrl != null
+                  ? (profileImageUrl.startsWith('data:image')
+                      ? MemoryImage(base64Decode(profileImageUrl.split(',').last)) as ImageProvider
+                      : NetworkImage(profileImageUrl))
+                  : null,
+              child: profileImageUrl == null
+                  ? const Icon(Icons.person, size: 40, color: Color(0xFF1976D2))
+                  : null,
             ),
           ),
           const SizedBox(height: 15),
@@ -230,7 +235,7 @@ class StudentHome extends ConsumerWidget {
   }
 
   Widget _buildDrawer(BuildContext context, WidgetRef ref, String name,
-      String dept, int semester, String studentID) {
+      String dept, int semester, String studentID, String? profileImageUrl) {
     return Drawer(
       child: Container(
         decoration: const BoxDecoration(
@@ -258,7 +263,17 @@ class StudentHome extends ConsumerWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
-                child: const CircleAvatar(child: Icon(Icons.person, size: 30)),
+                child: CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  backgroundImage: profileImageUrl != null
+                      ? (profileImageUrl.startsWith('data:image')
+                          ? MemoryImage(base64Decode(profileImageUrl.split(',').last)) as ImageProvider
+                          : NetworkImage(profileImageUrl))
+                      : null,
+                  child: profileImageUrl == null
+                      ? const Icon(Icons.person, size: 30)
+                      : null,
+                ),
               ),
             ),
             _drawerItem(context, Icons.home, 'الرئيسية', Colors.blue,
