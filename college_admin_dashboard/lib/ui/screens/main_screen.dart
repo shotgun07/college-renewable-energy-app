@@ -43,7 +43,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeProvider);
+    final isDarkMode = themeMode == ThemeMode.dark;
+    final themeNotifier = ref.read(themeProvider.notifier);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -54,9 +56,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              theme.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: () => theme.toggleTheme(),
+            onPressed: () => themeNotifier.toggleTheme(),
             tooltip: 'تبديل المظهر',
           ),
           IconButton(
@@ -71,7 +73,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: theme.isDarkMode
+            colors: isDarkMode
                 ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
                 : [Colors.blue.shade50, Colors.white],
           ),
@@ -106,9 +108,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: theme.isDarkMode ? const Color(0xFF64B5F6) : Colors.blue,
-          unselectedItemColor: theme.isDarkMode ? Colors.white60 : Colors.black54,
-          backgroundColor: theme.isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          selectedItemColor: isDarkMode ? const Color(0xFF64B5F6) : Colors.blue,
+          unselectedItemColor: isDarkMode ? Colors.white60 : Colors.black54,
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           onTap: _onItemTapped,
           elevation: 0,
           type: BottomNavigationBarType.fixed,

@@ -82,7 +82,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeProvider);
+    final isDarkMode = themeMode == ThemeMode.dark;
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -100,7 +101,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: theme.isDarkMode
+                      color: isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),
@@ -110,7 +111,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
                     widget.user.role == UserRole.admin ? 'مدير النظام' : 'مشرف',
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.isDarkMode
+                      color: isDarkMode
                           ? Colors.white60
                           : Colors.black54,
                     ),
@@ -128,7 +129,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: theme.isDarkMode
+                      color: isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),
@@ -144,7 +145,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: theme.isDarkMode
+                      color: isDarkMode
                           ? Colors.white
                           : Colors.black87,
                     ),

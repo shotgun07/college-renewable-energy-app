@@ -43,25 +43,25 @@ void main() async {
   );
 }
 
-final themeProvider = riverpod.ChangeNotifierProvider((ref) => ThemeProvider());
+final themeProvider = riverpod.NotifierProvider<ThemeNotifier, ThemeMode>(() => ThemeNotifier());
 
 class AdminDashboardApp extends riverpod.ConsumerWidget {
   const AdminDashboardApp({super.key});
 
   @override
   Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final theme = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'لوحة إدارة الكلية',
-      theme: theme.lightTheme.copyWith(
-        textTheme: GoogleFonts.cairoTextTheme(theme.lightTheme.textTheme),
+      theme: ThemeNotifier.lightTheme.copyWith(
+        textTheme: GoogleFonts.cairoTextTheme(ThemeNotifier.lightTheme.textTheme),
       ),
-      darkTheme: theme.darkTheme.copyWith(
-        textTheme: GoogleFonts.cairoTextTheme(theme.darkTheme.textTheme),
+      darkTheme: ThemeNotifier.darkTheme.copyWith(
+        textTheme: GoogleFonts.cairoTextTheme(ThemeNotifier.darkTheme.textTheme),
       ),
-      themeMode: theme.themeMode,
+      themeMode: themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
